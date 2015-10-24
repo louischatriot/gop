@@ -1,0 +1,19 @@
+.goban-container {
+  position: relative;
+  width: 100%;
+  /*border: solid black 1px;*/
+}
+
+.goban-line-h {
+  position: absolute;
+  height: 0;
+  width: 100%;
+  border-top: solid black 1px;
+}
+
+.goban-line-v {
+  position: absolute;
+  width: 0;
+  height: 100%;
+  border-left: solid black 1px;
+}
