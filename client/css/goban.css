@@ -17,3 +17,15 @@
   height: 100%;
   border-left: solid black 1px;
 }
+
+.goban-stone-white {
+  position: absolute;
+  background-image: url("../img/white-stone.png");
+  background-size: cover;
+}
+
+.goban-stone-black {
+  position: absolute;
+  background-image: url("../img/black-stone.png");
+  background-size: cover;
+}
