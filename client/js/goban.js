@@ -13,6 +13,7 @@ function Goban (_opts) {
   this.$container.addClass('goban-container');
 
   // Dynamically ensure the goban is always square if width was specified as a percentage
+  // TODO: use margin to ensure outside stones also fit
   this.$container.css('width', this.gobanSize);
   this.$container.height(this.$container.width());
   $(window).on('resize', function () {

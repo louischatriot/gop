@@ -1,3 +1,7 @@
+#the-goban {
+  margin: 70px;
+}
+
 .goban-container {
   position: relative;
 }
