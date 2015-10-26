@@ -50,12 +50,17 @@ Goban.prototype.drawBoard = function () {
 
 
 Goban.prototype.drawStone = function (color, x, y) {
-  var $stone = $('<div class="goban-stone-' + color + '"></div>');
+  var $stone = $('<div class="goban-stone-' + color + '" data-intersection="' + x + '-' + y + '"></div>');
   $stone.css('width', this.stoneSizePercent + '%');
   $stone.css('height', this.stoneSizePercent + '%');
   $stone.css('left', ((x - 0.5) * this.stoneSizePercent) + '%');
   $stone.css('top', ((y - 0.5) * this.stoneSizePercent) + '%');
   this.$container.append($stone);
+};
+
+
+Goban.prototype.removeStone = function (x, y) {
+  this.$container.find('div[data-intersection="' + x + '-' + y + '"]').remove();
 };
 
 

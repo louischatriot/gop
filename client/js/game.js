@@ -42,6 +42,18 @@ Game.prototype.getOppositePlayer = function () {
 };
 
 
+Game.prototype.adjacentIntersections = function (x, y) {
+  var res = [];
+
+  if (x > 0) { res.push({ x: x-1, y: y }); }
+  if (y > 0) { res.push({ x: x, y: y-1 }); }
+  if (x < this.size - 1) { res.push({ x: x+1, y: y }); }
+  if (y < this.size - 1) { res.push({ x: x, y: y+1 }); }
+
+  return res;
+};
+
+
 Game.prototype.play = function (player, x, y) {
   if (! this.isMoveValid(player, x, y)) { return; }
 
@@ -55,16 +67,30 @@ Game.prototype.play = function (player, x, y) {
 
 
 Game.prototype.isMoveValid = function (player, x, y) {
-  var oppositeGroup
-    , oppositePlayer = this.getOppositePlayer();
+  var oppositeGroup, oppositeLiberties
+    , oppositePlayer = this.getOppositePlayer()
+    , capturesHappened = false
+    , self = this
+    ;
 
   // Check we are not playing on top of another stone
   if (this.board[x][y] !== players.EMPTY) { return false; }
 
   // Check whether we are capturing an opposite group
-  if (x > 0 && this.board[x-1][y] === oppositePlayer) {
-    oppositeGroup = this.getGroup(x-1, y);
-  }
+  this.adjacentIntersections(x, y).forEach(function (i) {
+    if (self.board[i.x][i.y] === oppositePlayer) {
+      oppositeGroup = self.getGroup(i.x, i.y);
+      oppositeLiberties = self.groupLiberties(oppositeGroup);
+      if (oppositeLiberties.length === 1 && oppositeLiberties[0].x === x && oppositeLiberties[0].y === y) {
+        oppositeGroup.forEach(function (i) {
+          self.board[i.x][i.y] = players.EMPTY;
+          if (self.goban) { self.goban.removeStone(i.x, i.y); }
+        });
+        capturesHappened = true;
+      }
+    }
+  });
+  if (capturesHappened) { return true; }
   
 
   return true;
