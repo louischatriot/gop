@@ -7,20 +7,21 @@ function Goban (_opts) {
   // Options
   this.size = opts.size || 19;
   this.container = opts.container || '#the-goban';
-  this.$container = $(this.container);
-  this.gobanSize = opts.gobanSize || '100%';
 
-  this.$container.addClass('goban-container');
+  this.$outerContainer = $(this.container);
+  this.$outerContainer.addClass('goban-outer-container');
+  this.$outerContainer.append('<div class="goban-container"></div>');
+  this.$container = $(this.$outerContainer.find('.goban-container'));
+
+  this.stoneSizePercent = 100 / (this.size - 1);
+  this.$outerContainer.css('padding', (50 / this.size) + '%');
 
   // Dynamically ensure the goban is always square if width was specified as a percentage
   // TODO: use margin to ensure outside stones also fit
-  this.$container.css('width', this.gobanSize);
   this.$container.height(this.$container.width());
   $(window).on('resize', function () {
     self.$container.height(self.$container.width());
   });
-
-  this.stoneSizePercent = 100 / (this.size - 1);
 
   // Shadow stone
   this.$container.append('<div class="shadow-stone-white"></div>');

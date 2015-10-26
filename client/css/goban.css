@@ -1,9 +1,12 @@
-#the-goban {
-  margin: 70px;
+.goban-outer-container {
+  position: relative;
+  box-sizing: border-box;
 }
 
 .goban-container {
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .goban-line-h {

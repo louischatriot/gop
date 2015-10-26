@@ -1,6 +1,6 @@
 var game = new Game({ size: 6
                     , goban: true
-                    , gobanOptions: { gobanSize: '45%' }
+                    , gobanOptions: { gobanSize: '100%', container: '#the-goban' }
                     });
 
 game.play(2, 2);
