@@ -1,7 +1,5 @@
 .goban-container {
   position: relative;
-  width: 100%;
-  /*border: solid black 1px;*/
 }
 
 .goban-line-h {
@@ -28,4 +26,20 @@
   position: absolute;
   background-image: url("../img/black-stone.png");
   background-size: cover;
+}
+
+.shadow-stone-white {
+  display: none;
+  position: absolute;
+  background-image: url("../img/white-stone.png");
+  background-size: cover;
+  opacity: 0.65;
+}
+
+.shadow-stone-black {
+  display: none;
+  position: absolute;
+  background-image: url("../img/black-stone.png");
+  background-size: cover;
+  opacity: 0.65;
 }
