@@ -1,5 +1,3 @@
-var players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
-
 function Game (_opts) {
   var opts = _opts || {};
 
@@ -15,14 +13,33 @@ function Game (_opts) {
   for (var i = 0; i < this.size; i += 1) {
     this.board[i] = [];
     for (var j = 0; j < this.size; j += 1) {
-      this.board[i][j] = players.EMPTY;
+      this.board[i][j] = Game.players.EMPTY;
     }
   }
 
-  this.currentPlayer = players.BLACK;
+  this.currentPlayer = Game.players.BLACK;
   // TODO: handle handicap here
 
+  this.captured = {};
+  this.captured[Game.players.BLACK] = 0;
+  this.captured[Game.players.WHITE] = 0;
+
+  this.listeners = {};
 }
+
+Game.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
+
+
+Game.prototype.on = function(evt, listener) {
+  if (!this.listeners[evt]) { this.listeners[evt] = []; }
+  this.listeners[evt].push(listener);
+};
+
+Game.prototype.emit = function (evt, message) {
+  if (this.listeners[evt]) {
+    this.listeners[evt].forEach(function (fn) { fn(message); });
+  }
+};
 
 
 Game.prototype.cloneBoard = function () {
@@ -38,7 +55,7 @@ Game.prototype.cloneBoard = function () {
 
 
 Game.prototype.getOppositePlayer = function () {
-  return this.currentPlayer === players.BLACK ? players.WHITE : players.BLACK;
+  return this.currentPlayer === Game.players.BLACK ? Game.players.WHITE : Game.players.BLACK;
 };
 
 
@@ -69,9 +86,11 @@ Game.prototype.play = function (x, y) {
 
   var capturedStones = this.stonesCapturedByMove(x, y);
   capturedStones.forEach(function (stone) {
-    self.board[stone.x][stone.y] = players.EMPTY;
+    self.board[stone.x][stone.y] = Game.players.EMPTY;
     if (self.goban) { self.goban.removeStone(stone.x, stone.y); }
   });
+  this.captured[this.currentPlayer] += capturedStones.length;
+  this.emit('captured.change', { player: this.currentPlayer, captured: this.captured[this.currentPlayer] });
 
   // Actually play the move
   this.board[x][y] = this.currentPlayer;
@@ -95,6 +114,7 @@ Game.prototype.play = function (x, y) {
 
   // Move played, switch to next player
   this.currentPlayer = this.getOppositePlayer();
+  this.emit('currentPlayer.change', { currentPlayer: this.currentPlayer });
 };
 
 
@@ -109,7 +129,7 @@ Game.prototype.isMoveValid = function (x, y) {
     ;
 
   // Check we are not playing on top of another stone
-  if (this.board[x][y] !== players.EMPTY) { return false; }
+  if (this.board[x][y] !== Game.players.EMPTY) { return false; }
 
   // Prevent playing a Ko
   if (this.currentKo && this.currentKo.x === x && this.currentKo.y === y) { return false; }
@@ -120,10 +140,10 @@ Game.prototype.isMoveValid = function (x, y) {
   // Check whether this move is a sacrifice
   this.board[x][y] = this.currentPlayer;   // Not very clean but much smaller and scoped anyway
   if (this.groupLiberties(this.getGroup(x, y)).length === 0) {
-    this.board[x][y] = players.EMPTY;
+    this.board[x][y] = Game.players.EMPTY;
     return false;
   } else {
-    this.board[x][y] = players.EMPTY;
+    this.board[x][y] = Game.players.EMPTY;
     return true;
   }
 
@@ -160,7 +180,7 @@ Game.prototype.stonesCapturedByMove = function (x, y) {
  */
 Game.prototype.getGroupInternal = function (marks, player, x, y) {
   var group = [{ x: x, y: y }];
-  marks[x][y] = players.EMPTY;
+  marks[x][y] = Game.players.EMPTY;
 
   var self = this;
   this.adjacentIntersections(x, y).forEach(function (i) {
@@ -175,7 +195,7 @@ Game.prototype.getGroupInternal = function (marks, player, x, y) {
 Game.prototype.getGroup = function (x, y) {
   if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return []; }
   var player = this.board[x][y];
-  if (player === players.EMPTY) { return []; }
+  if (player === Game.players.EMPTY) { return []; }
 
   var marks = this.cloneBoard();
   return this.getGroupInternal(marks, player, x, y);
@@ -193,9 +213,9 @@ Game.prototype.groupLiberties = function (group) {
 
   group.forEach(function(stone) {
     self.adjacentIntersections(stone).forEach(function (i) {
-      if (marks[i.x][i.y] === players.EMPTY) {
+      if (marks[i.x][i.y] === Game.players.EMPTY) {
         liberties.push({ x: i.x, y: i.y });
-        marks[i.x][i.y] = players.BLACK;
+        marks[i.x][i.y] = Game.players.BLACK;
       }
     });
   });

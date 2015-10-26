@@ -72,8 +72,8 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 
   if (x < 0 || y < 0 || x >= this.size || y >= this.size || !this.game.isMoveValid(x, y)) {
     $shadowStone.css('display', 'none');
-    this.currentX = null;
-    this.currentY = null;
+    delete this.currentX;
+    delete this.currentY;
     return; 
   }
 
@@ -88,7 +88,7 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 };
 
 Goban.prototype.handleClick = function () {
-  if (this.currentX !== null && this.currentY !== null) {
+  if (this.currentX !== undefined && this.currentY !== undefined) {
     this.game.play(this.currentX, this.currentY);
     return;
   }

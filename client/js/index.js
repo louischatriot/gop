@@ -1,12 +1,9 @@
-var game = new Game({ size: 6
+var gobanContainer = "#the-goban", hudContainer = "#hud";
+
+var game = new Game({ size: 19
                     , goban: true
-                    , gobanOptions: { gobanSize: '100%', container: '#the-goban' }
+                    , gobanOptions: { container: gobanContainer }
                     });
-
-game.play(2, 2);
-game.play(1, 2);
-game.play(1, 3);
-
 
 
 $('#test').on('click', function () {
@@ -16,6 +13,13 @@ $('#test').on('click', function () {
   var liberties = game.groupLiberties(group);
   console.log(liberties);
 });
+
+
+game.on('captured.change', function (m) {
+  $(hudContainer + ' .captured-' + m.player).html(m.captured);
+});
+
+
 
 
 
