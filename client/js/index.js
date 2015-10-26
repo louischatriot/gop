@@ -23,7 +23,12 @@ game.on('currentPlayer.change', function (m) {
   $(hudContainer + ' .turn').html(m.currentPlayer);
 });
 
+game.on('currentMove.change', function (m) {
+  $(hudContainer + ' .move-number').html(m.currentMove);
+});
 
+$(hudContainer + ' .back').on('click', function () { game.back(); });
+$(hudContainer + ' .next').on('click', function () { game.next(); });
 
 
 

@@ -9,6 +9,19 @@ function Game (_opts) {
     this.goban = new Goban(opts.gobanOptions);
     this.goban.game = this;
   }
+
+  this.listeners = {};
+
+  this.initialize(true);
+}
+
+Game.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
+
+
+/*
+ * Hard initialization will also forget all played moves while soft reinitializes only the state
+ */
+Game.prototype.initialize = function (hard) {
   this.board = [];
   for (var i = 0; i < this.size; i += 1) {
     this.board[i] = [];
@@ -24,11 +37,9 @@ function Game (_opts) {
   this.captured[Game.players.BLACK] = 0;
   this.captured[Game.players.WHITE] = 0;
 
-  this.listeners = {};
-}
-
-Game.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
-
+  if (hard) { this.moves = []; }
+  this.currentMove = 0;   // Move 0 is empty board
+};
 
 Game.prototype.on = function(evt, listener) {
   if (!this.listeners[evt]) { this.listeners[evt] = []; }
@@ -79,6 +90,11 @@ Game.prototype.play = function (x, y) {
 
   if (! this.isMoveValid(x, y)) { return; }
 
+  // Check we are not breaking out of the current branch, forget it if it is the case
+  if (this.moves.length > this.currentMove && (this.moves[this.currentMove].x !== x || this.moves[this.currentMove].y !== y)) {
+    this.moves = this.moves.slice(0, this.currentMove);    
+  }
+
   if (this.currentKo) {
     if (this.goban) { this.goban.removeStone(this.currentKo.x, this.currentKo.y); } 
     this.currentKo = null;
@@ -94,6 +110,9 @@ Game.prototype.play = function (x, y) {
 
   // Actually play the move
   this.board[x][y] = this.currentPlayer;
+  this.moves.push({ x: x, y: y });
+  this.currentMove += 1;
+  this.emit('currentMove.change', { currentMove: this.currentMove });
   if (this.goban) {
     this.goban.drawStone(this.currentPlayer, x, y);
   }
@@ -224,6 +243,30 @@ Game.prototype.groupLiberties = function (group) {
 };
 
 
+/*
+ * For now variations are not possible. If a variation is played the game will forget about the previous branch (see play function).
+ */
+Game.prototype.backToMove = function (n) {
+  var i, j;
+
+  if (n >= this.moves.length) { return; }
+
+  if (this.goban) { this.goban.removeAllStones(); }
+  this.initialize();
+
+  for (var i = 0; i < n; i += 1) {
+    this.play(this.moves[i].x, this.moves[i].y);
+  }
+
+};
+
+Game.prototype.back = function () {
+  this.backToMove(this.currentMove - 1);
+};
+
+Game.prototype.next = function () {
+  this.backToMove(this.currentMove + 1);
+};
 
 
 

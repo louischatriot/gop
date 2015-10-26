@@ -65,7 +65,14 @@ Goban.prototype.removeStone = function (x, y) {
 };
 
 
+Goban.prototype.removeAllStones = function () {
+  this.$container.find('div.goban-stone-white').remove();
+  this.$container.find('div.goban-stone-black').remove();
+};
+
+
 Goban.prototype.updateShadow = function (x_px, y_px) {
+  this.$container.find('.shadow-stone-' + this.game.getOppositePlayer()).css('display', 'none');
   var $shadowStone = this.$container.find('.shadow-stone-' + this.game.currentPlayer);
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
   var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
