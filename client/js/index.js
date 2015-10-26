@@ -19,6 +19,10 @@ game.on('captured.change', function (m) {
   $(hudContainer + ' .captured-' + m.player).html(m.captured);
 });
 
+game.on('currentPlayer.change', function (m) {
+  $(hudContainer + ' .turn').html(m.currentPlayer);
+});
+
 
 
 
