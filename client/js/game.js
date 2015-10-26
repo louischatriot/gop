@@ -42,8 +42,11 @@ Game.prototype.getOppositePlayer = function () {
 };
 
 
+// Works with coordinates or directly a point pair
 Game.prototype.adjacentIntersections = function (x, y) {
   var res = [];
+
+  if (typeof x !== 'number') { y = x.y; x = x.x; }
 
   if (x > 0) { res.push({ x: x-1, y: y }); }
   if (y > 0) { res.push({ x: x, y: y-1 }); }
@@ -106,21 +109,12 @@ Game.prototype.getGroupInternal = function (marks, player, x, y) {
   var group = [{ x: x, y: y }];
   marks[x][y] = players.EMPTY;
 
-  if ((x > 0) && (marks[x-1][y] === player)) {
-    group = group.concat(this.getGroupInternal(marks, player, x-1, y));
-  }
-
-  if ((y > 0) && (marks[x][y-1] === player)) {
-    group = group.concat(this.getGroupInternal(marks, player, x, y-1));
-  }
-
-  if ((x < this.size - 1) && (marks[x+1][y] === player)) {
-    group = group.concat(this.getGroupInternal(marks, player, x+1, y));
-  }
-
-  if ((y < this.size - 1) && (marks[x][y+1] === player)) {
-    group = group.concat(this.getGroupInternal(marks, player, x, y+1));
-  }
+  var self = this;
+  this.adjacentIntersections(x, y).forEach(function (i) {
+    if (marks[i.x][i.y] === player) {
+      group = group.concat(self.getGroupInternal(marks, player, i.x, i.y));
+    }
+  });
 
   return group;
 };
@@ -143,27 +137,14 @@ Game.prototype.groupLiberties = function (group) {
     , liberties = []
     , self = this
     ;
-  
-  group.forEach(function(intersection) {
-    if (intersection.x > 0 && marks[intersection.x-1][intersection.y] === players.EMPTY) {
-      liberties.push({ x: intersection.x-1, y: intersection.y });
-      marks[intersection.x-1][intersection.y] = players.BLACK;
-    }
 
-    if (intersection.y > 0 && marks[intersection.x][intersection.y-1] === players.EMPTY) {
-      liberties.push({ x: intersection.x, y: intersection.y-1 });
-      marks[intersection.x][intersection.y-1] = players.BLACK;
-    }
-
-    if (intersection.x < self.size - 1 && marks[intersection.x+1][intersection.y] === players.EMPTY) {
-      liberties.push({ x: intersection.x+1, y: intersection.y });
-      marks[intersection.x+1][intersection.y] = players.BLACK;
-    }
-
-    if (intersection.y < self.size && marks[intersection.x][intersection.y+1] === players.EMPTY) {
-      liberties.push({ x: intersection.x, y: intersection.y+1 });
-      marks[intersection.x][intersection.y+1] = players.BLACK;
-    }
+  group.forEach(function(stone) {
+    self.adjacentIntersections(stone).forEach(function (i) {
+      if (marks[i.x][i.y] === players.EMPTY) {
+        liberties.push({ x: i.x, y: i.y });
+        marks[i.x][i.y] = players.BLACK;
+      }
+    });
   });
 
   return liberties;

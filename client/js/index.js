@@ -11,9 +11,8 @@ game.play('black', 1, 3);
 
 $('#test').on('click', function () {
   var group = game.getGroup(1, 2);
-  //console.log(group);
 
-
+  console.log("================================");
   var liberties = game.groupLiberties(group);
   console.log(liberties);
 });
