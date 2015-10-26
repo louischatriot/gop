@@ -1,7 +1,13 @@
-var goban = new Goban({ size: 19, gobanSize: '45%' });
+var game = new Game({ size: 4
+                    , goban: true
+                    , gobanOptions: { gobanSize: '45%' }
+                    });
 
-goban.drawBoard();
-goban.drawStone('white', 1, 2);
-goban.drawStone('black', 2, 2);
-goban.drawStone('black', 1, 3);
+game.play('white', 1, 2);
+game.play('black', 2, 2);
+game.play('black', 1, 3);
+
+
+
+
 

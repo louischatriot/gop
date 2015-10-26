@@ -21,14 +21,13 @@ function Goban (_opts) {
 
   this.stoneSizePercent = 100 / (this.size - 1);
 
-  this.currentPlayer = players.BLACK;
-  // TODO: handle handicap here
-
   // Shadow stone
   this.$container.append('<div class="shadow-stone-white"></div>');
   this.$container.append('<div class="shadow-stone-black"></div>');
   $(document).on('mousemove', function (e) { self.updateShadow(e.pageX - self.$container.offset().left, e.pageY - self.$container.offset().top); });
   $(document).on('click', function (e) { self.handleClick(); });
+
+  this.drawBoard();
 }
 
 
@@ -60,7 +59,7 @@ Goban.prototype.drawStone = function (color, x, y) {
 
 
 Goban.prototype.updateShadow = function (x_px, y_px) {
-  var $shadowStone = this.$container.find('.shadow-stone-' + this.currentPlayer);
+  var $shadowStone = this.$container.find('.shadow-stone-' + this.game.currentPlayer);
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
   var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
 
@@ -83,8 +82,7 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 
 Goban.prototype.handleClick = function () {
   if (this.currentX !== null && this.currentY !== null) {
-    this.drawStone(this.currentPlayer, this.currentX, this.currentY);
-    this.currentPlayer = this.currentPlayer === players.BLACK ? players.WHITE : players.BLACK;
+    this.game.play(this.game.currentPlayer, this.currentX, this.currentY);
     return;
   }
 };
