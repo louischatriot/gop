@@ -95,6 +95,15 @@ Game.prototype.isMoveValid = function (player, x, y) {
   });
   if (capturesHappened) { return true; }
   
+  // Check whether this move is a sacrifice
+  this.board[x][y] = player;   // Not very clean but much smaller and scoped anyway
+  if (this.groupLiberties(this.getGroup(x, y)).length === 0) {
+    this.board[x][y] = players.EMPTY;
+    return false;
+  } else {
+    this.board[x][y] = players.EMPTY;
+    return true;
+  }
 
   return true;
 };
