@@ -57,19 +57,30 @@ Game.prototype.adjacentIntersections = function (x, y) {
 };
 
 
-Game.prototype.play = function (player, x, y) {
-  if (! this.isMoveValid(player, x, y)) { return; }
+Game.prototype.play = function (x, y) {
+  var self = this;
 
-  this.board[x][y] = player;
-  this.currentPlayer = this.getOppositePlayer();
+  if (! this.isMoveValid(x, y)) { return; }
 
+  this.stonesCapturedByMove(x, y).forEach(function (stone) {
+    self.board[stone.x][stone.y] = players.EMPTY;
+    if (self.goban) { self.goban.removeStone(stone.x, stone.y); }
+  });
+
+  this.board[x][y] = this.currentPlayer;
   if (this.goban) {
-    this.goban.drawStone(player, x, y);
+    this.goban.drawStone(this.currentPlayer, x, y);
   }
+
+  // Move played, switch to next player
+  this.currentPlayer = this.getOppositePlayer();
 };
 
 
-Game.prototype.isMoveValid = function (player, x, y) {
+/*
+ * Checks whether the move can be played, leaving the board and goban unchanged
+ */
+Game.prototype.isMoveValid = function (x, y) {
   var oppositeGroup, oppositeLiberties
     , oppositePlayer = this.getOppositePlayer()
     , capturesHappened = false
@@ -80,23 +91,10 @@ Game.prototype.isMoveValid = function (player, x, y) {
   if (this.board[x][y] !== players.EMPTY) { return false; }
 
   // Check whether we are capturing an opposite group
-  this.adjacentIntersections(x, y).forEach(function (i) {
-    if (self.board[i.x][i.y] === oppositePlayer) {
-      oppositeGroup = self.getGroup(i.x, i.y);
-      oppositeLiberties = self.groupLiberties(oppositeGroup);
-      if (oppositeLiberties.length === 1 && oppositeLiberties[0].x === x && oppositeLiberties[0].y === y) {
-        oppositeGroup.forEach(function (i) {
-          self.board[i.x][i.y] = players.EMPTY;
-          if (self.goban) { self.goban.removeStone(i.x, i.y); }
-        });
-        capturesHappened = true;
-      }
-    }
-  });
-  if (capturesHappened) { return true; }
+  if (this.stonesCapturedByMove(x, y).length > 0) { return true; }
   
   // Check whether this move is a sacrifice
-  this.board[x][y] = player;   // Not very clean but much smaller and scoped anyway
+  this.board[x][y] = this.currentPlayer;   // Not very clean but much smaller and scoped anyway
   if (this.groupLiberties(this.getGroup(x, y)).length === 0) {
     this.board[x][y] = players.EMPTY;
     return false;
@@ -106,6 +104,28 @@ Game.prototype.isMoveValid = function (player, x, y) {
   }
 
   return true;
+};
+
+
+/*
+ * Get list of opposite stones that will be captured by the move, without actually playing it
+ * Will work whether the move has already been played or not
+ */
+Game.prototype.stonesCapturedByMove = function (x, y) {
+  var captures = []
+    , self = this;
+
+  this.adjacentIntersections(x, y).forEach(function (i) {
+    if (self.board[i.x][i.y] === self.getOppositePlayer()) {
+      var oppositeGroup = self.getGroup(i.x, i.y);
+      var oppositeLiberties = self.groupLiberties(oppositeGroup);
+      if (oppositeLiberties.length === 0 || (oppositeLiberties.length === 1 && oppositeLiberties[0].x === x && oppositeLiberties[0].y === y)) {
+        captures = captures.concat(oppositeGroup);
+      }
+    }
+  });
+
+  return captures;
 };
 
 
