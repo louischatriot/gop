@@ -62,14 +62,35 @@ Game.prototype.play = function (x, y) {
 
   if (! this.isMoveValid(x, y)) { return; }
 
-  this.stonesCapturedByMove(x, y).forEach(function (stone) {
+  if (this.currentKo) {
+    if (this.goban) { this.goban.removeStone(this.currentKo.x, this.currentKo.y); } 
+    this.currentKo = null;
+  }
+
+  var capturedStones = this.stonesCapturedByMove(x, y);
+  capturedStones.forEach(function (stone) {
     self.board[stone.x][stone.y] = players.EMPTY;
     if (self.goban) { self.goban.removeStone(stone.x, stone.y); }
   });
 
+  // Actually play the move
   this.board[x][y] = this.currentPlayer;
   if (this.goban) {
     this.goban.drawStone(this.currentPlayer, x, y);
+  }
+  
+  // Handle Ko situations
+  if (capturedStones.length === 1) {
+    var capturingGroup = this.getGroup(x, y);
+    if (capturingGroup.length === 1) {
+      var capturingGroupLiberties = this.groupLiberties(capturingGroup);
+      if (capturingGroupLiberties.length === 1 && capturingGroupLiberties[0].x === capturedStones[0].x && capturingGroupLiberties[0].y === capturedStones[0].y) {
+        this.currentKo = { x: capturedStones[0].x, y: capturedStones[0].y };
+        if (this.goban) {
+          this.goban.drawStone('square', this.currentKo.x, this.currentKo.y);
+        }
+      }
+    }
   }
 
   // Move played, switch to next player
@@ -89,6 +110,9 @@ Game.prototype.isMoveValid = function (x, y) {
 
   // Check we are not playing on top of another stone
   if (this.board[x][y] !== players.EMPTY) { return false; }
+
+  // Prevent playing a Ko
+  if (this.currentKo && this.currentKo.x === x && this.currentKo.y === y) { return false; }
 
   // Check whether we are capturing an opposite group
   if (this.stonesCapturedByMove(x, y).length > 0) { return true; }
