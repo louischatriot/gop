@@ -1,8 +1,8 @@
 var google = require('googleapis')
   , OAuth2 = google.auth.OAuth2
-  , creds = require('../gauth')
-  , url = require('url')
   , config = require('./config')
+  , creds = require('./google-auth-creds')
+  , url = require('url')
   , oauth2Client = new OAuth2( creds.clientId
                              , creds.clientSecret
                              , url.resolve(config.host, '/googleauth'))

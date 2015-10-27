@@ -22,7 +22,7 @@ app.use(session({ secret: 'eropcwnjdi'
 
 // API
 api.use(middlewares.apiMustBeLoggedIn);
-api.post('/mappings', mappings.createMapping);
+//api.post('/mappings', mappings.createMapping);
 app.use('/api', api);
 
 
@@ -38,8 +38,8 @@ webapp.use(middlewares.addCommonLocals);
 webapp.get('/create', function (req, res) {
   res.render('create-mapping.jade');
 });
-webapp.get('/list', mappings.showAllMappings);
-webapp.get('/view/:from', mappings.viewMapping);
+//webapp.get('/list', mappings.showAllMappings);
+//webapp.get('/view/:from', mappings.viewMapping);
 app.use('/web', webapp);
 
 
@@ -53,14 +53,11 @@ app.get('/', function (req, res) {
 });
 
 
-// Serve static client-side js and css (should really be done through Nginx but at this scale we don't care)
+// Serve static client-side js and css
+// TODO: use Nginx to serve static assets
 app.get('/assets/*', function (req, res) {
   res.sendFile(process.cwd() + req.url);
 });
-
-
-// Actual redirections
-app.get('/:from', mappings.redirect);
 
 
 
