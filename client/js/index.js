@@ -30,5 +30,10 @@ game.on('currentMove.change', function (m) {
 $(hudContainer + ' .back').on('click', function () { game.back(); });
 $(hudContainer + ' .next').on('click', function () { game.next(); });
 
+$(document).on('keydown', function (evt) {
+  if (evt.keyCode === 37) { game.back(); }
+  if (evt.keyCode === 39) { game.next(); }
+});
+
 
 

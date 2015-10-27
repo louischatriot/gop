@@ -173,9 +173,11 @@ Game.prototype.isMoveValid = function (x, y) {
 /*
  * Get list of opposite stones that will be captured by the move, without actually playing it
  * Will work whether the move has already been played or not
+ * No duplicates in the list
  */
 Game.prototype.stonesCapturedByMove = function (x, y) {
-  var captures = []
+  var _captures = {}
+    , captures = []
     , self = this;
 
   this.adjacentIntersections(x, y).forEach(function (i) {
@@ -183,11 +185,15 @@ Game.prototype.stonesCapturedByMove = function (x, y) {
       var oppositeGroup = self.getGroup(i.x, i.y);
       var oppositeLiberties = self.groupLiberties(oppositeGroup);
       if (oppositeLiberties.length === 0 || (oppositeLiberties.length === 1 && oppositeLiberties[0].x === x && oppositeLiberties[0].y === y)) {
-        captures = captures.concat(oppositeGroup);
+        //captures = captures.concat(oppositeGroup);
+        oppositeGroup.forEach(function (i) {
+          _captures[i.x + '-' + i.y] = { x: i.x, y: i.y };
+        });
       }
     }
   });
 
+  Object.keys(_captures).forEach(function (k) { captures.push(_captures[k]); });
   return captures;
 };
 
@@ -270,5 +276,5 @@ Game.prototype.next = function () {
 
 
 
-
-
+// Code shared on the server.
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') { module.exports = Game; }
