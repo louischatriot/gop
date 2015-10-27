@@ -92,7 +92,7 @@ Game.prototype.adjacentIntersections = function (x, y) {
 Game.prototype.play = function (x, y) {
   var self = this;
 
-  if (this.currentMove > 0 && this.moves[this.currentMove - 1] === Game.moves.END) { return; }   // Nothing to play or replay
+  if (!this.canPlay()) { return; }
   if (! this.isMoveValid(x, y)) { return; }
 
   // Check we are not breaking out of the current branch, forget it if it is the case
@@ -146,7 +146,7 @@ Game.prototype.play = function (x, y) {
  * Pass
  */
 Game.prototype.pass = function () {
-  if (this.currentMove > 0 && this.moves[this.currentMove - 1] === Game.moves.END) { return; }   // Nothing to play or replay
+  if (!this.canPlay()) { return; }   // Nothing to play or replay
 
   var finished = false;
 
@@ -170,6 +170,14 @@ Game.prototype.pass = function () {
   } else {
     this.emit('currentPlayer.change', { currentPlayer: this.currentPlayer });
   }
+};
+
+
+/*
+ * Tells whether you can still play in that game branch
+ */
+Game.prototype.canPlay = function () {
+  return (this.currentMove === 0 || this.moves[this.currentMove - 1] !== Game.moves.END);
 };
 
 

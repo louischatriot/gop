@@ -72,6 +72,12 @@ Goban.prototype.removeAllStones = function () {
 
 
 Goban.prototype.updateShadow = function (x_px, y_px) {
+  if (!this.game.canPlay()) {
+    this.$container.find('.shadow-stone-white').css('display', 'none');
+    this.$container.find('.shadow-stone-black').css('display', 'none');
+    return;
+  }
+
   this.$container.find('.shadow-stone-' + this.game.getOppositePlayer()).css('display', 'none');
   var $shadowStone = this.$container.find('.shadow-stone-' + this.game.currentPlayer);
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
