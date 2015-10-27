@@ -1,0 +1,58 @@
+.goban-outer-container {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.goban-container {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.goban-line-h {
+  position: absolute;
+  height: 0;
+  width: 100%;
+  border-top: solid black 1px;
+}
+
+.goban-line-v {
+  position: absolute;
+  width: 0;
+  height: 100%;
+  border-left: solid black 1px;
+}
+
+.goban-stone-white {
+  position: absolute;
+  background-image: url("../img/white-stone.png");
+  background-size: cover;
+}
+
+.goban-stone-black {
+  position: absolute;
+  background-image: url("../img/black-stone.png");
+  background-size: cover;
+}
+
+.shadow-stone-white {
+  display: none;
+  position: absolute;
+  background-image: url("../img/white-stone.png");
+  background-size: cover;
+  opacity: 0.65;
+}
+
+.shadow-stone-black {
+  display: none;
+  position: absolute;
+  background-image: url("../img/black-stone.png");
+  background-size: cover;
+  opacity: 0.65;
+}
+
+.goban-stone-square {
+  position: absolute;
+  background-image: url("../img/square.png");
+  background-size: cover;
+}

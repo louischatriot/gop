@@ -35,9 +35,7 @@ app.get('/logout', login.logout);
 // Web interface
 webapp.use(middlewares.mustBeLoggedIn);
 webapp.use(middlewares.addCommonLocals);
-webapp.get('/create', function (req, res) {
-  res.render('create-mapping.jade');
-});
+webapp.get('/create-game', function (req, res) { res.render('create-game.jade'); });
 //webapp.get('/list', mappings.showAllMappings);
 //webapp.get('/view/:from', mappings.viewMapping);
 app.use('/web', webapp);
