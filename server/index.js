@@ -12,7 +12,7 @@ var express = require('express')
 
 // Initialize Express server and session
 // Right now the session store is a simple in memory key value store and gets erased
-// on restart. If needed I'll create a Nedb-backed one
+// on restart. TODO: use a Redis-backed one
 app.use(bodyParser.json());
 app.use(session({ secret: 'eropcwnjdi'
                 , resave: true
