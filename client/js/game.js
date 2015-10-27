@@ -16,6 +16,7 @@ function Game (_opts) {
 }
 
 Game.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
+Game.moves = { PASS: 'pass', END: 'end' };
 
 
 /*
@@ -85,9 +86,13 @@ Game.prototype.adjacentIntersections = function (x, y) {
 };
 
 
+/*
+ * Play a non-pass move (put a stone on the board)
+ */
 Game.prototype.play = function (x, y) {
   var self = this;
 
+  if (this.currentMove > 0 && this.moves[this.currentMove - 1] === Game.moves.END) { return; }   // Nothing to play or replay
   if (! this.isMoveValid(x, y)) { return; }
 
   // Check we are not breaking out of the current branch, forget it if it is the case
@@ -112,7 +117,7 @@ Game.prototype.play = function (x, y) {
   this.board[x][y] = this.currentPlayer;
   this.moves.push({ x: x, y: y });
   this.currentMove += 1;
-  this.emit('currentMove.change', { currentMove: this.currentMove });
+  this.emit('currentMove.change', { currentMove: this.currentMove, x: x, y: y, player: this.currentPlayer });
   if (this.goban) {
     this.goban.drawStone(this.currentPlayer, x, y);
   }
@@ -134,6 +139,37 @@ Game.prototype.play = function (x, y) {
   // Move played, switch to next player
   this.currentPlayer = this.getOppositePlayer();
   this.emit('currentPlayer.change', { currentPlayer: this.currentPlayer });
+};
+
+
+/*
+ * Pass
+ */
+Game.prototype.pass = function () {
+  if (this.currentMove > 0 && this.moves[this.currentMove - 1] === Game.moves.END) { return; }   // Nothing to play or replay
+
+  var finished = false;
+
+  if (this.currentKo) {
+    if (this.goban) { this.goban.removeStone(this.currentKo.x, this.currentKo.y); } 
+    this.currentKo = null;
+  }
+
+  if (this.currentMove === 0 || (this.moves[this.currentMove - 1] !== Game.moves.END && this.moves[this.currentMove - 1] !== Game.moves.PASS)) {
+    this.moves.push(Game.moves.PASS);
+  } else {
+    this.moves.push(Game.moves.END);
+    finished = true;
+  }
+  this.currentMove += 1;
+  this.emit('currentMove.change', { currentMove: this.currentMove, player: this.currentPlayer, pass: true, finished: finished });
+
+  this.currentPlayer = this.getOppositePlayer();
+  if (finished) {
+    this.emit('currentPlayer.change', { finished: true });
+  } else {
+    this.emit('currentPlayer.change', { currentPlayer: this.currentPlayer });
+  }
 };
 
 
@@ -185,7 +221,6 @@ Game.prototype.stonesCapturedByMove = function (x, y) {
       var oppositeGroup = self.getGroup(i.x, i.y);
       var oppositeLiberties = self.groupLiberties(oppositeGroup);
       if (oppositeLiberties.length === 0 || (oppositeLiberties.length === 1 && oppositeLiberties[0].x === x && oppositeLiberties[0].y === y)) {
-        //captures = captures.concat(oppositeGroup);
         oppositeGroup.forEach(function (i) {
           _captures[i.x + '-' + i.y] = { x: i.x, y: i.y };
         });
@@ -260,8 +295,13 @@ Game.prototype.backToMove = function (n) {
   if (this.goban) { this.goban.removeAllStones(); }
   this.initialize();
 
+  this.emit('currentMove.change', { currentMove: 0 });
   for (var i = 0; i < n; i += 1) {
-    this.play(this.moves[i].x, this.moves[i].y);
+    if (this.moves[i] === Game.moves.PASS || this.moves[i] === Game.moves.END) {
+      this.pass();
+    } else {
+      this.play(this.moves[i].x, this.moves[i].y);
+    }
   }
 
 };

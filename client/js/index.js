@@ -5,30 +5,37 @@ var game = new Game({ size: 19
                     , gobanOptions: { container: gobanContainer }
                     });
 
-
-$('#test').on('click', function () {
-  var group = game.getGroup(1, 2);
-
-  console.log("================================");
-  var liberties = game.groupLiberties(group);
-  console.log(liberties);
-});
-
-
 game.on('captured.change', function (m) {
   $(hudContainer + ' .captured-' + m.player).html(m.captured);
 });
 
 game.on('currentPlayer.change', function (m) {
-  $(hudContainer + ' .turn').html(m.currentPlayer);
+  if (!m.finished) {
+    $(hudContainer + ' .turn').html('Turn: ' + m.currentPlayer);
+  } else {
+    $(hudContainer + ' .turn').html('Game finished');
+  }
 });
 
 game.on('currentMove.change', function (m) {
-  $(hudContainer + ' .move-number').html(m.currentMove);
+  var msg;
+
+  if (m.finished) {
+    msg = 'Move ' + m.currentMove + ' - game finished';
+  } else if (m.pass) {
+    msg = 'Move ' + m.currentMove + ' - ' + m.player + ' passed';
+  } else if (m.currentMove === 0) {
+    msg = "No move played yet";
+  } else {
+    msg = 'Move ' + m.currentMove + ' - ' + m.player + ' ' + m.x + '-' + m.y;
+  }
+
+  $(hudContainer + ' .move-number').html(msg);
 });
 
 $(hudContainer + ' .back').on('click', function () { game.back(); });
 $(hudContainer + ' .next').on('click', function () { game.next(); });
+$(hudContainer + ' .pass').on('click', function () { game.pass(); });
 
 $(document).on('keydown', function (evt) {
   if (evt.keyCode === 37) { game.back(); }
