@@ -2,8 +2,11 @@
   "dependencies": {
     "body-parser": "^1.14.1",
     "express": "^4.13.3",
+    "express-nedb-session": "^0.1.0",
     "express-session": "^1.12.0",
     "googleapis": "^2.1.5",
-    "jade": "^1.11.0"
+    "jade": "^1.11.0",
+    "mongoose": "^4.2.3",
+    "nedb": "^1.2.1"
   }
 }

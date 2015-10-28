@@ -4,19 +4,20 @@ var express = require('express')
   , bodyParser = require('body-parser')
   , config = require('./lib/config')
   , session = require('express-session')
+  , SessionStore = require('express-nedb-session')(session)
   , middlewares = require('./lib/middlewares')
   , webapp = express.Router()
   , api = express.Router()
   , login = require('./lib/login')
   ;
 
-// Initialize Express server and session
-// Right now the session store is a simple in memory key value store and gets erased
-// on restart. TODO: use a Redis-backed one
 app.use(bodyParser.json());
-app.use(session({ secret: 'eropcwnjdi'
-                , resave: true
-                , saveUninitialized: true
+
+// Persistent sessions using NeDB. If usage becomes too high, switch to Redis or Mongo for backing.
+app.use(session({ secret: 'efsdpsfsdufsdb'
+                , resave: false
+                , saveUninitialized: false
+                , store: new SessionStore({ filename: './data/sessions.nedb' })
                 }));
 
 

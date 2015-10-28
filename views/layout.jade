@@ -18,13 +18,15 @@ html(lang="en")
           div#navbar(class="collapse nav-collapse")
             ul(class="nav")
               li
-                a(href="/web/create") Create game
+                a(href="/web/create-game") Create game
               li
-                a(href="/logout") Logout
+                a(href="/web/play") Play
 
-            ul(class="nav navbar-right")
+            ul.pull-right.nav
               li
                 a= username
+              li
+                a(href="/logout") (logout)
 
     div.container
       block content

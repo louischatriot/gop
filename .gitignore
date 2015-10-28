@@ -33,3 +33,6 @@ node_modules
 
 # Google Auth creds
 server/lib/google-auth-creds.js
+
+# NeDB data files
+data/*
