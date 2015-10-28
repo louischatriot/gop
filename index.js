@@ -9,6 +9,7 @@ var express = require('express')
   , webapp = express.Router()
   , api = express.Router()
   , login = require('./lib/login')
+  , challenges = require('./lib/challenges')
   ;
 
 app.use(bodyParser.json());
@@ -23,8 +24,7 @@ app.use(session({ secret: 'efsdpsfsdufsdb'
 
 // API
 api.use(middlewares.apiMustBeLoggedIn);
-//api.post('/mappings', mappings.createMapping);
-app.use('/api', api);
+api.get('/challenges', challenges.createChallenge);
 
 
 // Auth with Google
@@ -38,6 +38,11 @@ webapp.use(middlewares.mustBeLoggedIn);
 webapp.use(middlewares.addCommonLocals);
 webapp.get('/create-game', function (req, res) { res.render('create-game.jade'); });
 webapp.get('/play', function (req, res) { res.render('play.jade'); });
+webapp.get('/open-challenges', challenges.openChallenges);
+
+
+// Declare subrouters
+app.use('/api', api);
 app.use('/web', webapp);
 
 

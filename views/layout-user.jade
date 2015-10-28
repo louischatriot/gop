@@ -4,7 +4,9 @@ block navbarContents
   div#navbar(class="collapse nav-collapse")
     ul(class="nav")
       li
-        a(href="/web/create-game") Create game
+        a(href="#",id="create-game") Create game
+      li
+        a(href="/web/open-challenges") Open challenges
       li
         a(href="/web/play") Play
 
@@ -14,3 +16,16 @@ block navbarContents
       li
         a(href="/logout") (logout)
 
+block append specificJs
+  script(type="text/javascript", src="/assets/js/create-challenge.js")
+
+// Create new game modal
+block append footer
+  div#create-game-modal.modal.hide.fade(role="dialog")
+    div.modal-header
+      button.close(data-dismiss="modal", aria-hidden="true") x
+      h3 Create new game
+    div.modal-body
+      | Some text here
+    div.modal-footer
+      button.btn.btn-primary Go!
