@@ -1,0 +1,16 @@
+extends layout
+
+block navbarContents
+  div#navbar(class="collapse nav-collapse")
+    ul(class="nav")
+      li
+        a(href="/web/create-game") Create game
+      li
+        a(href="/web/play") Play
+
+    ul.pull-right.nav
+      li
+        a= username
+      li
+        a(href="/logout") (logout)
+
