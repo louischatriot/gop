@@ -44,9 +44,9 @@ app.use('/web', webapp);
 // Root. Descriptive main page if not logged, main action (create a mapping) if logged
 app.get('/', function (req, res) {
   if (req.session.user) {
-    return res.redirect(302, '/web/create');
+    return res.redirect(302, '/web/create-game');
   } else {
-    return res.render('main.jade');
+    return res.render('front-page.jade');
   }
 });
 
