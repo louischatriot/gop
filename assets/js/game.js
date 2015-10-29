@@ -1,3 +1,21 @@
+/*
+ * Public API
+ * * game.play(x, y) - have current player play a stone at x, y
+ * * game.pass() - have current player pass
+ * * game.isMoveValid(x, y) - can the current player play a stone at x, y
+ * * game.canPlay() - are there still moves to be played in the current branch
+ * * game.currentPlayer
+ * * game.getOppositePlayer(player[optional]) - if player specified, get his opponent, otherwise get the current player's opponent
+ *
+ * Events emitted and payload
+ * * movePlayed - a requested valid move was actually played and the game state updated
+ *              { player, pass=[true|false|undefined], finished[true|false|undefined], x[optional], y[optional], moveNumber[0 means empty board] }
+ *
+ * * captured.change - The number of captured stones for one player changed, send the amount and corresponding player
+ *                   { player, captured }
+ */
+
+
 function Game (_opts) {
   var opts = _opts || {};
 
@@ -66,8 +84,15 @@ Game.prototype.cloneBoard = function () {
 };
 
 
-Game.prototype.getOppositePlayer = function () {
-  return this.currentPlayer === Game.players.BLACK ? Game.players.WHITE : Game.players.BLACK;
+/*
+ * If player specified, get his opponent, otherwise get the current player's opponent
+ */
+Game.prototype.getOppositePlayer = function (player) {
+  if (player) {
+    return player === Game.players.BLACK ? Game.players.WHITE : Game.players.BLACK;
+  } else {
+    return this.currentPlayer === Game.players.BLACK ? Game.players.WHITE : Game.players.BLACK;
+  }
 };
 
 
@@ -117,7 +142,7 @@ Game.prototype.play = function (x, y) {
   this.board[x][y] = this.currentPlayer;
   this.moves.push({ x: x, y: y });
   this.currentMove += 1;
-  this.emit('currentMove.change', { currentMove: this.currentMove, x: x, y: y, player: this.currentPlayer });
+  this.emit('movePlayed', { moveNumber: this.currentMove, x: x, y: y, player: this.currentPlayer });
   if (this.goban) {
     this.goban.drawStone(this.currentPlayer, x, y);
   }
@@ -138,7 +163,6 @@ Game.prototype.play = function (x, y) {
 
   // Move played, switch to next player
   this.currentPlayer = this.getOppositePlayer();
-  this.emit('currentPlayer.change', { currentPlayer: this.currentPlayer });
 };
 
 
@@ -148,28 +172,34 @@ Game.prototype.play = function (x, y) {
 Game.prototype.pass = function () {
   if (!this.canPlay()) { return; }   // Nothing to play or replay
 
-  var finished = false;
+  var finished = false, move;
 
+  // TODO: handle duplication with playStone
   if (this.currentKo) {
     if (this.goban) { this.goban.removeStone(this.currentKo.x, this.currentKo.y); } 
     this.currentKo = null;
   }
 
+  // Decide whether this pass finished the game
   if (this.currentMove === 0 || (this.moves[this.currentMove - 1] !== Game.moves.END && this.moves[this.currentMove - 1] !== Game.moves.PASS)) {
-    this.moves.push(Game.moves.PASS);
+    move = Game.moves.PASS;
   } else {
-    this.moves.push(Game.moves.END);
+    move = Game.moves.END;
     finished = true;
   }
+
+  // Check we are not breaking out of the current branch, forget it if it is the case
+  // TODO: handle duplication with playStone
+  if (this.moves.length > this.currentMove && (this.moves[this.currentMove] !== move)) {
+    this.moves = this.moves.slice(0, this.currentMove);
+  }
+
+  // Actually play the move
+  this.moves.push(move);
   this.currentMove += 1;
-  this.emit('currentMove.change', { currentMove: this.currentMove, player: this.currentPlayer, pass: true, finished: finished });
+  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, pass: true, finished: finished });
 
   this.currentPlayer = this.getOppositePlayer();
-  if (finished) {
-    this.emit('currentPlayer.change', { finished: true });
-  } else {
-    this.emit('currentPlayer.change', { currentPlayer: this.currentPlayer });
-  }
 };
 
 
@@ -303,7 +333,7 @@ Game.prototype.backToMove = function (n) {
   if (this.goban) { this.goban.removeAllStones(); }
   this.initialize();
 
-  this.emit('currentMove.change', { currentMove: 0 });
+  this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
   for (var i = 0; i < n; i += 1) {
     if (this.moves[i] === Game.moves.PASS || this.moves[i] === Game.moves.END) {
       this.pass();

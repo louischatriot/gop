@@ -9,28 +9,29 @@ game.on('captured.change', function (m) {
   $(hudContainer + ' .captured-' + m.player).html(m.captured);
 });
 
-game.on('currentPlayer.change', function (m) {
-  if (!m.finished) {
-    $(hudContainer + ' .turn').html('Turn: ' + m.currentPlayer);
-  } else {
-    $(hudContainer + ' .turn').html('Game finished');
-  }
-});
+game.on('movePlayed', function (m) {
 
-game.on('currentMove.change', function (m) {
+  console.log(m);
+
+  // Move played
   var msg;
-
   if (m.finished) {
-    msg = 'Move ' + m.currentMove + ' - game finished';
+    msg = 'Move ' + m.moveNumber + ' - game finished';
   } else if (m.pass) {
-    msg = 'Move ' + m.currentMove + ' - ' + m.player + ' passed';
+    msg = 'Move ' + m.moveNumber + ' - ' + m.player + ' passed';
   } else if (m.currentMove === 0) {
     msg = "No move played yet";
   } else {
-    msg = 'Move ' + m.currentMove + ' - ' + m.player + ' ' + m.x + '-' + m.y;
+    msg = 'Move ' + m.moveNumber + ' - ' + m.player + ' ' + m.x + '-' + m.y;
   }
-
   $(hudContainer + ' .move-number').html(msg);
+
+  // Turn
+  if (!m.finished) {
+    $(hudContainer + ' .turn').html('Turn: ' + game.getOppositePlayer(m.player));
+  } else {
+    $(hudContainer + ' .turn').html('Game finished');
+  }
 });
 
 $(hudContainer + ' .back').on('click', function () { game.back(); });
