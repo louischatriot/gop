@@ -58,6 +58,7 @@ Game.prototype.initialize = function (hard) {
 
   if (hard) { this.moves = []; }
   this.currentMove = 0;   // Move 0 is empty board
+  delete this.currentKo;   // Necessary for reinitializations
 };
 
 Game.prototype.on = function(evt, listener) {
@@ -127,7 +128,7 @@ Game.prototype.play = function (x, y) {
 
   if (this.currentKo) {
     if (this.goban) { this.goban.removeStone(this.currentKo.x, this.currentKo.y); } 
-    this.currentKo = null;
+    delete this.currentKo;
   }
 
   var capturedStones = this.stonesCapturedByMove(x, y);
@@ -140,7 +141,7 @@ Game.prototype.play = function (x, y) {
 
   // Actually play the move
   this.board[x][y] = this.currentPlayer;
-  this.moves.push({ x: x, y: y });
+  this.moves[this.currentMove] = { x: x, y: y };
   this.currentMove += 1;
   this.emit('movePlayed', { moveNumber: this.currentMove, x: x, y: y, player: this.currentPlayer });
   if (this.goban) {
@@ -328,7 +329,11 @@ Game.prototype.groupLiberties = function (group) {
 Game.prototype.backToMove = function (n) {
   var i, j;
 
-  if (n >= this.moves.length) { return; }
+  console.log('------------');
+  console.log(n);
+  console.log(this.moves.length);
+
+  if (n > this.moves.length) { return; }
 
   if (this.goban) { this.goban.removeAllStones(); }
   this.initialize();

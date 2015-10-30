@@ -10,9 +10,6 @@ game.on('captured.change', function (m) {
 });
 
 game.on('movePlayed', function (m) {
-
-  console.log(m);
-
   // Move played
   var msg;
   if (m.finished) {
