@@ -196,7 +196,7 @@ Game.prototype.pass = function () {
   }
 
   // Actually play the move
-  this.moves.push(move);
+  this.moves[this.currentMove] = move;
   this.currentMove += 1;
   this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, pass: true, finished: finished });
 
@@ -328,10 +328,6 @@ Game.prototype.groupLiberties = function (group) {
  */
 Game.prototype.backToMove = function (n) {
   var i, j;
-
-  console.log('------------');
-  console.log(n);
-  console.log(this.moves.length);
 
   if (n > this.moves.length) { return; }
 
