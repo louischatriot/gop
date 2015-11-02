@@ -1,6 +1,6 @@
 /*
  * Public API
- * * game.play(x, y) - have current player play a stone at x, y
+ * * game.playStone(x, y) - have current player play a stone at x, y
  * * game.pass() - have current player pass
  * * game.isMoveValid(x, y) - can the current player play a stone at x, y
  * * game.canPlay() - are there still moves to be played in the current branch
@@ -115,7 +115,7 @@ Game.prototype.adjacentIntersections = function (x, y) {
 /*
  * Play a non-pass move (put a stone on the board)
  */
-Game.prototype.play = function (x, y) {
+Game.prototype.playStone = function (x, y) {
   var self = this;
 
   if (!this.canPlay()) { return; }
@@ -123,18 +123,19 @@ Game.prototype.play = function (x, y) {
 
   // Check we are not breaking out of the current branch, forget it if it is the case
   if (this.moves.length > this.currentMove && (this.moves[this.currentMove].x !== x || this.moves[this.currentMove].y !== y)) {
-    this.moves = this.moves.slice(0, this.currentMove);    
+    this.moves = this.moves.slice(0, this.currentMove);
   }
 
   if (this.currentKo) {
-    if (this.goban) { this.goban.removeStone(this.currentKo.x, this.currentKo.y); } 
+    this.emit('intersection.cleared', { intersections: [{ x: this.currentKo.x, this.currentKo.y }] });
+    if (this.goban) { this.goban.clearIntersection(this.currentKo.x, this.currentKo.y); }
     delete this.currentKo;
   }
 
   var capturedStones = this.stonesCapturedByMove(x, y);
   capturedStones.forEach(function (stone) {
     self.board[stone.x][stone.y] = Game.players.EMPTY;
-    if (self.goban) { self.goban.removeStone(stone.x, stone.y); }
+    if (self.goban) { self.goban.clearIntersection(stone.x, stone.y); }
   });
   this.captured[this.currentPlayer] += capturedStones.length;
   this.emit('captured.change', { player: this.currentPlayer, captured: this.captured[this.currentPlayer] });
@@ -147,7 +148,7 @@ Game.prototype.play = function (x, y) {
   if (this.goban) {
     this.goban.drawStone(this.currentPlayer, x, y);
   }
-  
+
   // Handle Ko situations
   if (capturedStones.length === 1) {
     var capturingGroup = this.getGroup(x, y);
@@ -177,7 +178,7 @@ Game.prototype.pass = function () {
 
   // TODO: handle duplication with playStone
   if (this.currentKo) {
-    if (this.goban) { this.goban.removeStone(this.currentKo.x, this.currentKo.y); } 
+    if (this.goban) { this.goban.clearIntersection(this.currentKo.x, this.currentKo.y); } 
     this.currentKo = null;
   }
 
@@ -230,7 +231,7 @@ Game.prototype.isMoveValid = function (x, y) {
 
   // Check whether we are capturing an opposite group
   if (this.stonesCapturedByMove(x, y).length > 0) { return true; }
-  
+
   // Check whether this move is a sacrifice
   this.board[x][y] = this.currentPlayer;   // Not very clean but much smaller and scoped anyway
   if (this.groupLiberties(this.getGroup(x, y)).length === 0) {
@@ -331,7 +332,7 @@ Game.prototype.backToMove = function (n) {
 
   if (n > this.moves.length) { return; }
 
-  if (this.goban) { this.goban.removeAllStones(); }
+  if (this.goban) { this.goban.clearBoard(); }
   this.initialize();
 
   this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
@@ -339,7 +340,7 @@ Game.prototype.backToMove = function (n) {
     if (this.moves[i] === Game.moves.PASS || this.moves[i] === Game.moves.END) {
       this.pass();
     } else {
-      this.play(this.moves[i].x, this.moves[i].y);
+      this.playStone(this.moves[i].x, this.moves[i].y);
     }
   }
 

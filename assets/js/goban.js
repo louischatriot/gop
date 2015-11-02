@@ -1,4 +1,12 @@
-var players = { WHITE: 'white', BLACK: 'black' };
+/*
+ * Public API
+ * * goban.drawStone(color, x, y) - color can be black, white or square
+ * * goban.clearIntersection(x, y)
+ * * goban.clearBoard()
+ *
+ * Events emitted and payload
+ *
+ */
 
 function Goban (_opts) {
   var opts = _opts || {}
@@ -38,12 +46,12 @@ Goban.prototype.drawBoard = function () {
 
   for (var i = 1; i <= this.size; i += 1) {
     $line = $('<div></div>');
-    $line.addClass('goban-line-h');  
+    $line.addClass('goban-line-h');
     $line.css('top', ((i - 1) * this.stoneSizePercent) + '%');
     this.$container.append($line);
 
     $line = $('<div></div>');
-    $line.addClass('goban-line-v');  
+    $line.addClass('goban-line-v');
     $line.css('left', ((i - 1) * this.stoneSizePercent) + '%');
     this.$container.append($line);
   }
@@ -60,14 +68,15 @@ Goban.prototype.drawStone = function (color, x, y) {
 };
 
 
-Goban.prototype.removeStone = function (x, y) {
+Goban.prototype.clearIntersection = function (x, y) {
   this.$container.find('div[data-intersection="' + x + '-' + y + '"]').remove();
 };
 
 
-Goban.prototype.removeAllStones = function () {
+Goban.prototype.clearBoard = function () {
   this.$container.find('div.goban-stone-white').remove();
   this.$container.find('div.goban-stone-black').remove();
+  this.$container.find('div.goban-stone-square').remove();
 };
 
 
@@ -87,7 +96,7 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
     $shadowStone.css('display', 'none');
     delete this.currentX;
     delete this.currentY;
-    return; 
+    return;
   }
 
   $shadowStone.css('width', this.stoneSizePercent + '%');
@@ -102,7 +111,7 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 
 Goban.prototype.handleClick = function () {
   if (this.currentX !== undefined && this.currentY !== undefined) {
-    this.game.play(this.currentX, this.currentY);
+    this.game.playStone(this.currentX, this.currentY);
     return;
   }
 };
