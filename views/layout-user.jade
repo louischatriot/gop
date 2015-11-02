@@ -8,6 +8,8 @@ block navbarContents
       li
         a(href="/web/open-challenges") Open challenges
       li
+        a(href="/web/players") Players
+      li
         a(href="/web/play") Play
 
     ul.pull-right.nav
@@ -18,6 +20,8 @@ block navbarContents
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/create-challenge.js")
+  script(type="text/javascript", src="/socket.io/socket.io.js")
+  |<script>var socket = io();</script>
 
 // Create new game modal
 block append footer

@@ -1,6 +1,7 @@
 var express = require('express')
   , app = express()
   , server = require('http').Server(app)
+  , io = require('socket.io')(server)
   , bodyParser = require('body-parser')
   , config = require('./lib/config')
   , session = require('express-session')
@@ -10,18 +11,20 @@ var express = require('express')
   , api = express.Router()
   , login = require('./lib/login')
   , challenges = require('./lib/challenges')
-  , users = require('./lib/users');
+  , users = require('./lib/users')
+  , sessionMiddleware
   ;
 
 app.use(bodyParser.json());
 
 // Persistent sessions using NeDB. If usage becomes too high, switch to Redis or Mongo for backing.
-app.use(session({ secret: 'efsdpsfsdufsdb'
-                , resave: false
-                , saveUninitialized: false
-                , store: new SessionStore({ filename: './data/sessions.nedb' })
-                }));
-
+// Middleware shared with socket.io for authentication purposes
+sessionMiddleware = session({ secret: 'efsdpsfsdufsdb'
+                            , resave: false
+                            , saveUninitialized: false
+                            , store: new SessionStore({ filename: './data/sessions.nedb' })
+                            });
+app.use(sessionMiddleware);
 
 // API
 api.use(middlewares.apiMustBeLoggedIn);
@@ -40,6 +43,7 @@ webapp.use(middlewares.addCommonLocals);
 webapp.get('/create-game', function (req, res) { res.render('create-game.jade'); });
 webapp.get('/play', function (req, res) { res.render('play.jade'); });
 webapp.get('/open-challenges', challenges.openChallenges);
+webapp.get('/players', users.allPlayersPage);
 
 
 // Declare subrouters
@@ -70,6 +74,27 @@ process.on('uncaughtException', function (err) {
   console.log('Caught an uncaught exception, I should probably send an email or something');
   console.log(err);
 });
+
+
+
+
+// Shared session middleware
+io.use(function (socket, next) {
+  sessionMiddleware(socket.request, socket.request.res, next);
+});
+
+
+io.on('connection', function (socket) {
+  if (socket.request.session.user) {
+    users.userConnected(socket.request.session.user);
+  }
+
+  socket.on('disconnect', function () {
+    users.userDisconnected(socket.request.session.user);
+  });
+});
+
+
 
 
 server.listen(config.serverPort);
