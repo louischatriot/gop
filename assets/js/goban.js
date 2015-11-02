@@ -4,8 +4,7 @@
  * * goban.clearIntersection(x, y)
  * * goban.clearBoard()
  *
- * Events emitted and payload
- *
+ * No Event emitted
  */
 
 function Goban (_opts) {
@@ -15,6 +14,7 @@ function Goban (_opts) {
   // Options
   this.size = opts.size || 19;
   this.container = opts.container || '#the-goban';
+  this.game = opts.game;
 
   this.$outerContainer = $(this.container);
   this.$outerContainer.addClass('goban-outer-container');

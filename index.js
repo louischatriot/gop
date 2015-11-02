@@ -10,6 +10,7 @@ var express = require('express')
   , api = express.Router()
   , login = require('./lib/login')
   , challenges = require('./lib/challenges')
+  , users = require('./lib/users');
   ;
 
 app.use(bodyParser.json());
