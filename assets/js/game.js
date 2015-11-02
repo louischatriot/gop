@@ -13,6 +13,11 @@
  *
  * * captured.change - The number of captured stones for one player changed, send the amount and corresponding player
  *                   { player, captured }
+ *
+ * * intersection.cleared - An intersection was cleared
+ *                        { x, y }
+ *
+ * * board.cleared - The board was cleared
  */
 
 
@@ -21,15 +26,8 @@ function Game (_opts) {
 
   // Options
   this.size = opts.size || 19;
-  if (opts.goban) {
-    opts.gobanOptions = opts.gobanOptions || {};
-    opts.gobanOptions.size = this.size;
-    this.goban = new Goban(opts.gobanOptions);
-    this.goban.game = this;
-  }
 
   this.listeners = {};
-
   this.initialize(true);
 }
 
@@ -127,15 +125,14 @@ Game.prototype.playStone = function (x, y) {
   }
 
   if (this.currentKo) {
-    this.emit('intersection.cleared', { intersections: [{ x: this.currentKo.x, this.currentKo.y }] });
-    if (this.goban) { this.goban.clearIntersection(this.currentKo.x, this.currentKo.y); }
+    this.emit('intersection.cleared', { x: this.currentKo.x, y: this.currentKo.y });
     delete this.currentKo;
   }
 
   var capturedStones = this.stonesCapturedByMove(x, y);
   capturedStones.forEach(function (stone) {
     self.board[stone.x][stone.y] = Game.players.EMPTY;
-    if (self.goban) { self.goban.clearIntersection(stone.x, stone.y); }
+    self.emit('intersection.cleared', { x: stone.x, y: stone.y });
   });
   this.captured[this.currentPlayer] += capturedStones.length;
   this.emit('captured.change', { player: this.currentPlayer, captured: this.captured[this.currentPlayer] });
@@ -145,9 +142,6 @@ Game.prototype.playStone = function (x, y) {
   this.moves[this.currentMove] = { x: x, y: y };
   this.currentMove += 1;
   this.emit('movePlayed', { moveNumber: this.currentMove, x: x, y: y, player: this.currentPlayer });
-  if (this.goban) {
-    this.goban.drawStone(this.currentPlayer, x, y);
-  }
 
   // Handle Ko situations
   if (capturedStones.length === 1) {
@@ -156,9 +150,7 @@ Game.prototype.playStone = function (x, y) {
       var capturingGroupLiberties = this.groupLiberties(capturingGroup);
       if (capturingGroupLiberties.length === 1 && capturingGroupLiberties[0].x === capturedStones[0].x && capturingGroupLiberties[0].y === capturedStones[0].y) {
         this.currentKo = { x: capturedStones[0].x, y: capturedStones[0].y };
-        if (this.goban) {
-          this.goban.drawStone('square', this.currentKo.x, this.currentKo.y);
-        }
+        this.emit('ko.new', { x: this.currentKo.x, y: this.currentKo.y });
       }
     }
   }
@@ -178,8 +170,8 @@ Game.prototype.pass = function () {
 
   // TODO: handle duplication with playStone
   if (this.currentKo) {
-    if (this.goban) { this.goban.clearIntersection(this.currentKo.x, this.currentKo.y); } 
-    this.currentKo = null;
+    this.emit('intersection.cleared', { x: this.currentKo.x, y: this.currentKo.y });
+    delete this.currentKo;
   }
 
   // Decide whether this pass finished the game
@@ -332,7 +324,7 @@ Game.prototype.backToMove = function (n) {
 
   if (n > this.moves.length) { return; }
 
-  if (this.goban) { this.goban.clearBoard(); }
+  this.emit('board.cleared');
   this.initialize();
 
   this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
