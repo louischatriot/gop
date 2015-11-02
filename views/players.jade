@@ -5,3 +5,17 @@ block head
 
 block content
   h3 All players
+  b Connected players
+  ul
+    each user in connectedUsers
+      li= user.email
+        |&nbsp; -&nbsp;
+        =user.name
+
+  b Disconnected players
+  ul
+    each user in disconnectedUsers
+      li= user.email
+
+block append specificJs
+  script(type="text/javascript", src="/assets/js/players.js")

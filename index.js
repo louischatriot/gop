@@ -2,29 +2,20 @@ var express = require('express')
   , app = express()
   , server = require('http').Server(app)
   , io = require('socket.io')(server)
-  , bodyParser = require('body-parser')
-  , config = require('./lib/config')
-  , session = require('express-session')
-  , SessionStore = require('express-nedb-session')(session)
-  , middlewares = require('./lib/middlewares')
   , webapp = express.Router()
   , api = express.Router()
+  , bodyParser = require('body-parser')
+  , config = require('./lib/config')
+  , middlewares = require('./lib/middlewares')
   , login = require('./lib/login')
   , challenges = require('./lib/challenges')
   , users = require('./lib/users')
-  , sessionMiddleware
+  , realtime = require('./lib/realtime')
   ;
 
 app.use(bodyParser.json());
 
-// Persistent sessions using NeDB. If usage becomes too high, switch to Redis or Mongo for backing.
-// Middleware shared with socket.io for authentication purposes
-sessionMiddleware = session({ secret: 'efsdpsfsdufsdb'
-                            , resave: false
-                            , saveUninitialized: false
-                            , store: new SessionStore({ filename: './data/sessions.nedb' })
-                            });
-app.use(sessionMiddleware);
+app.use(middlewares.session);
 
 // API
 api.use(middlewares.apiMustBeLoggedIn);
@@ -76,26 +67,7 @@ process.on('uncaughtException', function (err) {
 });
 
 
-
-
-// Shared session middleware
-io.use(function (socket, next) {
-  sessionMiddleware(socket.request, socket.request.res, next);
-});
-
-
-io.on('connection', function (socket) {
-  if (socket.request.session.user) {
-    users.userConnected(socket.request.session.user);
-  }
-
-  socket.on('disconnect', function () {
-    users.userDisconnected(socket.request.session.user);
-  });
-});
-
-
-
-
+// Tie socket.io to express server then launch the latter
+realtime.initialize(io)
 server.listen(config.serverPort);
 
