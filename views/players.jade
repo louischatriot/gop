@@ -6,25 +6,16 @@ block head
 block content
   h3 All players
   div#lists
-    b Connected players
-    ul
-      each user in connectedUsers
-        li= user.email
-          |&nbsp; -&nbsp;
-          =user.name
-
-    b Disconnected players
-    ul
-      each user in disconnectedUsers
-        li= user.email
-
   div#listTemplate(style="display: none;")
     |<b>Connected players</b><ul>
     |{{#connectedUsers}} <li>{{name}} - {{email}}</li> {{/connectedUsers}}
     |</ul><b>Disconnected players</b><ul>
     |{{#disconnectedUsers}} <li>{{name}} - {{email}}</li> {{/disconnectedUsers}} {{^disconnectedUsers}} No disconnected player {{/disconnectedUsers}}
     |</ul>
-
+  div#connectedInitialData(style="display: none;")
+    =connectedUsers
+  div#disconnectedInitialData(style="display: none;")
+    =disconnectedUsers
 
 
 block append specificJs
