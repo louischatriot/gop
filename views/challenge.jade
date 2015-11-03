@@ -2,35 +2,15 @@ extends layout-user
 
 block head
   title Awaiting opponent
-  link(href="/assets/css/goban.css", rel="stylesheet")
-
+  link(href="/assets/css/challenge.css", rel="stylesheet")
 
 block content
-  div.row
-    div.span7
-      div#the-goban
-
-    div.span5#hud
-      div
-        b.turn Turn: black
-      div.move-number No move played yet
-      ul
-        li Black: <span class="captured-black">0</span> captured
-
-        li White: <span class="captured-white">0</span> captured
-      button.btn.back
-        b &lt;
-      button.btn.next
-        b &gt;
-      br
-      br
-      button.btn.pass Pass
+  div#waiting-banner
+    h1(style="text-align: center;") Waiting for a challenger! Meanwhile enjoy some Go wisdom.
+    div.quote
 
   div#challenge-id(style="display: none;")
     =challengeId
 
 block append specificJs
-  script(type="text/javascript", src="/assets/js/goban.js")
-  script(type="text/javascript", src="/assets/js/game.js")
   script(type="text/javascript", src="/assets/js/challenge.js")
-

@@ -1,0 +1,25 @@
+#waiting-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 30%;
+  background-color: #E0C970;
+  border-top: 5px solid black;
+  border-bottom: 5px solid black;
+  padding-top: 30px;
+  box-sizing: border-box;
+}
+
+#waiting-banner h1 {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+#waiting-banner .quote {
+  text-align: center;
+  font-weight: bold;
+  font-style: italic;
+  font-size: 20px;
+  color: #666;
+  margin-bottom: 40px;
+}
