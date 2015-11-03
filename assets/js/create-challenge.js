@@ -1,9 +1,4 @@
 $(document).ready(function () {
-  // For dev
-  $('#create-game-modal').modal();
-
-
-
   $('#create-game').on('click', function (evt) {
     evt.preventDefault();
     $('#create-game-modal').modal();

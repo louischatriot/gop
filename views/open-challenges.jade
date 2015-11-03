@@ -5,4 +5,22 @@ block head
 
 block content
   h3 List of open challenges
+  //-TODO: only use the template even for initial state
+  div#list
+    b Open challenges
+    ul
+      each challenge in openChallenges
+        li= challenge.name
+          |&nbsp; -&nbsp;
+          =challenge.size
+
+  div#listTemplate(style="display: none;")
+    |<b>Open challenges</b><ul>
+    |{{#openChallenges}} <li>{{name}} - {{size}}</li> {{/openChallenges}}
+    |{{^openChallenges}} No open challenge {{/openChallenges}}
+    |</ul>
+
+
+block append specificJs
+  script(type="text/javascript", src="/assets/js/open-challenges.js")
 
