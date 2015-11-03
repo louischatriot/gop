@@ -14,12 +14,13 @@ var express = require('express')
   ;
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(middlewares.session);
 
 // API
 api.use(middlewares.apiMustBeLoggedIn);
-api.get('/create-challenge', challenges.createChallenge);
+api.post('/create-challenge', challenges.createChallenge);
 
 
 // Auth with Google
