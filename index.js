@@ -19,7 +19,7 @@ app.use(middlewares.session);
 
 // API
 api.use(middlewares.apiMustBeLoggedIn);
-api.get('/challenges', challenges.createChallenge);
+api.get('/create-challenge', challenges.createChallenge);
 
 
 // Auth with Google
@@ -32,7 +32,7 @@ app.get('/logout', login.logout);
 webapp.use(middlewares.mustBeLoggedIn);
 webapp.use(middlewares.addCommonLocals);
 webapp.get('/create-game', function (req, res) { res.render('create-game.jade'); });
-webapp.get('/play', function (req, res) { res.render('play.jade'); });
+webapp.get('/challenge/:id?', challenges.openChallenge);
 webapp.get('/open-challenges', challenges.openChallenges);
 webapp.get('/players', users.allPlayersPage);
 
@@ -63,7 +63,7 @@ app.get('/assets/*', function (req, res) {
 // Last wall of defense against a bad crash
 process.on('uncaughtException', function (err) {
   console.log('Caught an uncaught exception, I should probably send an email or something');
-  console.log(err);
+  console.log(err.stack);
 });
 
 

@@ -4,13 +4,16 @@ $(document).ready(function () {
     $('#create-game-modal').modal();
   });
 
-  //$('#create-game-modal .btn-primary').on('click', function (evt) {
-    //console.log('RRR');
-  //});
-
-
-
   $('#create-game-modal .btn-primary').on('click', function () {
-    console.log('Sending data to server');
+    $.ajax({ url: '/api/create-challenge' }).complete(function (jqxhr) {
+      if (jqxhr.status === 500) {
+        // TODO: explain error
+        return;
+      }
+
+      if (jqxhr.status === 200) {
+        document.location = jqxhr.responseJSON.redirectUrl;
+      }
+    });
   });
 });

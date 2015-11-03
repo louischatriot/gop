@@ -22,7 +22,7 @@ block content
     |<b>Connected players</b><ul>
     |{{#connectedUsers}} <li>{{name}} - {{email}}</li> {{/connectedUsers}}
     |</ul><b>Disconnected players</b><ul>
-    |{{#disconnectedUsers}} <li>{{name}} - {{email}}</li> {{/disconnectedUsers}}
+    |{{#disconnectedUsers}} <li>{{name}} - {{email}}</li> {{/disconnectedUsers}} {{^disconnectedUsers}} No disconnected player {{/disconnectedUsers}}
     |</ul>
 
 
