@@ -9,6 +9,7 @@ var express = require('express')
   , middlewares = require('./lib/middlewares')
   , login = require('./lib/login')
   , challenges = require('./lib/challenges')
+  , games = require('./lib/games')
   , users = require('./lib/users')
   , realtime = require('./lib/realtime')
   ;
@@ -33,7 +34,8 @@ app.get('/logout', login.logout);
 webapp.use(middlewares.mustBeLoggedIn);
 webapp.use(middlewares.addCommonLocals);
 webapp.get('/create-game', function (req, res) { res.render('create-game.jade'); });
-webapp.get('/challenge/:id?', challenges.openChallenge);
+webapp.get('/challenge/:id', challenges.openChallenge);
+webapp.get('/play/:id', games.play);
 webapp.get('/open-challenges', challenges.openChallenges);
 webapp.get('/players', users.allPlayersPage);
 

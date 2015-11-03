@@ -21,7 +21,7 @@ var quotes = [
 , "Resigning is gote, and should never be played"
 ];
 
-var interval = 3000;
+var interval = 4000;
 
 function changeQuote () {
   $('#waiting-banner .quote').html(quotes[Math.floor(Math.random() * quotes.length)]);
