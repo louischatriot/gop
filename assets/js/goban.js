@@ -15,6 +15,7 @@ function Goban (_opts) {
   this.size = opts.size || 19;
   this.container = opts.container || '#the-goban';
   this.game = opts.game;
+  this.canPlayColor = opts.canPlayColor || 'none';
 
   this.$outerContainer = $(this.container);
   this.$outerContainer.addClass('goban-outer-container');
@@ -80,8 +81,13 @@ Goban.prototype.clearBoard = function () {
 };
 
 
+Goban.prototype.userCanPlay = function () {
+  return this.game.currentPlayer === this.canPlayColor;
+};
+
+
 Goban.prototype.updateShadow = function (x_px, y_px) {
-  if (!this.game.canPlay()) {
+  if (!this.game.canPlay() || !this.userCanPlay()) {
     this.$container.find('.shadow-stone-white').css('display', 'none');
     this.$container.find('.shadow-stone-black').css('display', 'none');
     return;
@@ -110,7 +116,7 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 };
 
 Goban.prototype.handleClick = function () {
-  if (this.currentX !== undefined && this.currentY !== undefined) {
+  if (this.currentX !== undefined && this.currentY !== undefined && this.game.canPlay() && this.userCanPlay()) {
     this.game.playStone(this.currentX, this.currentY);
     return;
   }

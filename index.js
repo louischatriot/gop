@@ -22,6 +22,7 @@ app.use(middlewares.session);
 // API
 api.use(middlewares.apiMustBeLoggedIn);
 api.post('/create-challenge', challenges.createChallenge);
+api.post('/game/:id', games.playApi);
 
 
 // Auth with Google
@@ -35,7 +36,7 @@ webapp.use(middlewares.mustBeLoggedIn);
 webapp.use(middlewares.addCommonLocals);
 webapp.get('/create-game', function (req, res) { res.render('create-game.jade'); });
 webapp.get('/challenge/:id', challenges.openChallenge);
-webapp.get('/play/:id', games.play);
+webapp.get('/game/:id', games.game);
 webapp.get('/open-challenges', challenges.openChallenges);
 webapp.get('/players', users.allPlayersPage);
 

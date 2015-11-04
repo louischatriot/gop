@@ -1,11 +1,12 @@
 extends layout-user
 
 block head
-  title Play
+  title Play - #{game.name}
   link(href="/assets/css/goban.css", rel="stylesheet")
 
 
 block content
+  h4 #{game.name} - #{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size}
   div.row
     div.span7
       div#the-goban
@@ -15,9 +16,9 @@ block content
         b.turn Turn: black
       div.move-number No move played yet
       ul
-        li Black: <span class="captured-black">0</span> captured
+        li #{game.blackPlayerName} (black): <span class="captured-black">0</span> captured
 
-        li White: <span class="captured-white">0</span> captured
+        li #{game.whitePlayerName} (white): <span class="captured-white">0</span> captured
       button.btn.back
         b &lt;
       button.btn.next
@@ -26,8 +27,8 @@ block content
       br
       button.btn.pass Pass
 
-  div#challenge-id(style="display: none;")
-    =challengeId
+    div#can-play(style="display: none;") #{canPlay}
+    div#game-id(style="display: none;") #{game._id}
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/goban.js")

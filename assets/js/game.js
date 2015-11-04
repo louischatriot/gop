@@ -137,6 +137,7 @@ Game.prototype.playStone = function (x, y) {
   this.captured[this.currentPlayer] += capturedStones.length;
   this.emit('captured.change', { player: this.currentPlayer, captured: this.captured[this.currentPlayer] });
 
+
   // Actually play the move
   this.board[x][y] = this.currentPlayer;
   this.moves[this.currentMove] = { x: x, y: y };

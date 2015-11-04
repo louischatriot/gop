@@ -8,7 +8,7 @@ block content
   div#list
   div#listTemplate(style="display: none;")
     |<b>Open challenges</b><ul>
-    |{{#openChallenges}} <a href="/web/play/{{_id}}"><li>{{name}} - {{size}}x{{size}}</li></a> {{/openChallenges}}
+    |{{#openChallenges}} <a href="/web/game/{{_id}}"><li>{{name}} - {{size}}x{{size}}</li></a> {{/openChallenges}}
     |{{^openChallenges}} No open challenge {{/openChallenges}}
     |</ul>
   div#listInitialData(style="display: none;")

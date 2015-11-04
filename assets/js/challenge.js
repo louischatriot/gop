@@ -32,6 +32,6 @@ changeQuote();
 
 
 socket.on('challenger.connected', function (m) {
-  document.location = '/web/play/' + $('#challenge-id').html();
+  document.location = '/web/game/' + $('#challenge-id').html();
 });
 

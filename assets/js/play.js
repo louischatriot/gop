@@ -1,6 +1,9 @@
 var gobanContainer = "#the-goban", hudContainer = "#hud";
 var game = new Game({ size: 19 });
-var goban = new Goban({ size: 19, container: gobanContainer, game: game });
+var canPlayColor = $('#can-play').html();
+var gameId = $('#game-id').html();
+var goban = new Goban({ size: 19, container: gobanContainer, game: game, canPlayColor: canPlayColor });
+var movesReceivedFromServer = {};
 
 game.on('intersection.cleared', function (i) {
   goban.clearIntersection(i.x, i.y);
@@ -35,6 +38,13 @@ game.on('movePlayed', function (m) {
   } else {
     $(hudContainer + ' .turn').html('Game finished');
   }
+
+  // Warn server if the move originates from the goban
+  if (!movesReceivedFromServer[m.x + '-' + m.y]) {
+    $.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { x: m.x, y: m.y } });
+  } else {
+    console.log("DONT RESEND");
+  }
 });
 
 game.on('ko.new', function (m) {
@@ -50,5 +60,10 @@ $(document).on('keydown', function (evt) {
   if (evt.keyCode === 39) { game.next(); }
 });
 
+// Server warns us of a played move
+socket.on('game.movePlayed', function (m) {
+  movesReceivedFromServer[m.x + '-' + m.y] = true;
+  game.playStone(parseInt(m.x, 10), m.y);
+});
 
 
