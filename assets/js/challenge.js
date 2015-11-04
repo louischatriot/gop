@@ -29,3 +29,9 @@ function changeQuote () {
 
 setInterval(changeQuote, interval);
 changeQuote();
+
+
+socket.on('challenger.connected', function (m) {
+  document.location = '/web/play/' + $('#challenge-id').html();
+});
+
