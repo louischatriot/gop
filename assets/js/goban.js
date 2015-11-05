@@ -14,7 +14,7 @@ function Goban (_opts) {
   // Options
   this.size = opts.size || 19;
   this.container = opts.container || '#the-goban';
-  this.game = opts.game;
+  this.gameEngine = opts.gameEngine;
   this.canPlayColor = opts.canPlayColor || 'none';
 
   this.$outerContainer = $(this.container);
@@ -101,23 +101,23 @@ Goban.prototype.clearBoard = function () {
 
 
 Goban.prototype.userCanPlay = function () {
-  return this.game.currentPlayer === this.canPlayColor;
+  return this.gameEngine.currentPlayer === this.canPlayColor;
 };
 
 
 Goban.prototype.updateShadow = function (x_px, y_px) {
-  if (!this.game.canPlay() || !this.userCanPlay()) {
+  if (!this.gameEngine.canPlay() || !this.userCanPlay()) {
     this.$container.find('.shadow-stone-white').css('display', 'none');
     this.$container.find('.shadow-stone-black').css('display', 'none');
     return;
   }
 
-  this.$container.find('.shadow-stone-' + this.game.getOppositePlayer()).css('display', 'none');
-  var $shadowStone = this.$container.find('.shadow-stone-' + this.game.currentPlayer);
+  this.$container.find('.shadow-stone-' + this.gameEngine.getOppositePlayer()).css('display', 'none');
+  var $shadowStone = this.$container.find('.shadow-stone-' + this.gameEngine.currentPlayer);
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
   var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
 
-  if (x < 0 || y < 0 || x >= this.size || y >= this.size || !this.game.isMoveValid(x, y)) {
+  if (x < 0 || y < 0 || x >= this.size || y >= this.size || !this.gameEngine.isMoveValid(x, y)) {
     $shadowStone.css('display', 'none');
     delete this.currentX;
     delete this.currentY;
@@ -135,8 +135,8 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 };
 
 Goban.prototype.handleClick = function () {
-  if (this.currentX !== undefined && this.currentY !== undefined && this.game.canPlay() && this.userCanPlay()) {
-    this.game.playStone(this.currentX, this.currentY);
+  if (this.currentX !== undefined && this.currentY !== undefined && this.gameEngine.canPlay() && this.userCanPlay()) {
+    this.gameEngine.playStone(this.currentX, this.currentY);
     return;
   }
 };

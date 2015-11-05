@@ -1,14 +1,14 @@
 /*
  * Public API
- * * game.playStone(x, y) - have current player play a stone at x, y
- * * game.pass() - have current player pass
- * * game.isMoveValid(x, y) - can the current player play a stone at x, y
- * * game.canPlay() - are there still moves to be played in the current branch
- * * game.currentPlayer
- * * game.getOppositePlayer(player[optional]) - if player specified, get his opponent, otherwise get the current player's opponent
+ * * gameEngine.playStone(x, y) - have current player play a stone at x, y
+ * * gameEngine.pass() - have current player pass
+ * * gameEngine.isMoveValid(x, y) - can the current player play a stone at x, y
+ * * gameEngine.canPlay() - are there still moves to be played in the current branch
+ * * gameEngine.currentPlayer
+ * * gameEngine.getOppositePlayer(player[optional]) - if player specified, get his opponent, otherwise get the current player's opponent
  *
  * Events emitted and payload
- * * movePlayed - a requested valid move was actually played and the game state updated
+ * * movePlayed - a requested valid move was actually played and the gameEngine state updated
  *              { player, pass=[true|false|undefined], finished[true|false|undefined], x[optional], y[optional], moveNumber[0 means empty board] }
  *
  * * captured.change - The number of captured stones for one player changed, send the amount and corresponding player
@@ -21,7 +21,7 @@
  */
 
 
-function Game (_opts) {
+function GameEngine (_opts) {
   var opts = _opts || {};
 
   // Options
@@ -31,47 +31,47 @@ function Game (_opts) {
   this.initialize(true);
 }
 
-Game.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
-Game.moves = { PASS: 'pass', END: 'end' };
+GameEngine.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
+GameEngine.moves = { PASS: 'pass', END: 'end' };
 
 
 /*
  * Hard initialization will also forget all played moves while soft reinitializes only the state
  */
-Game.prototype.initialize = function (hard) {
+GameEngine.prototype.initialize = function (hard) {
   this.board = [];
   for (var i = 0; i < this.size; i += 1) {
     this.board[i] = [];
     for (var j = 0; j < this.size; j += 1) {
-      this.board[i][j] = Game.players.EMPTY;
+      this.board[i][j] = GameEngine.players.EMPTY;
     }
   }
 
-  this.currentPlayer = Game.players.BLACK;
+  this.currentPlayer = GameEngine.players.BLACK;
   // TODO: handle handicap here
 
   this.captured = {};
-  this.captured[Game.players.BLACK] = 0;
-  this.captured[Game.players.WHITE] = 0;
+  this.captured[GameEngine.players.BLACK] = 0;
+  this.captured[GameEngine.players.WHITE] = 0;
 
   if (hard) { this.moves = []; }
   this.currentMove = 0;   // Move 0 is empty board
   delete this.currentKo;   // Necessary for reinitializations
 };
 
-Game.prototype.on = function(evt, listener) {
+GameEngine.prototype.on = function(evt, listener) {
   if (!this.listeners[evt]) { this.listeners[evt] = []; }
   this.listeners[evt].push(listener);
 };
 
-Game.prototype.emit = function (evt, message) {
+GameEngine.prototype.emit = function (evt, message) {
   if (this.listeners[evt]) {
     this.listeners[evt].forEach(function (fn) { fn(message); });
   }
 };
 
 
-Game.prototype.cloneBoard = function () {
+GameEngine.prototype.cloneBoard = function () {
   var res = [];
   for (var i = 0; i < this.size; i += 1) {
     res[i] = [];
@@ -86,17 +86,17 @@ Game.prototype.cloneBoard = function () {
 /*
  * If player specified, get his opponent, otherwise get the current player's opponent
  */
-Game.prototype.getOppositePlayer = function (player) {
+GameEngine.prototype.getOppositePlayer = function (player) {
   if (player) {
-    return player === Game.players.BLACK ? Game.players.WHITE : Game.players.BLACK;
+    return player === GameEngine.players.BLACK ? GameEngine.players.WHITE : GameEngine.players.BLACK;
   } else {
-    return this.currentPlayer === Game.players.BLACK ? Game.players.WHITE : Game.players.BLACK;
+    return this.currentPlayer === GameEngine.players.BLACK ? GameEngine.players.WHITE : GameEngine.players.BLACK;
   }
 };
 
 
 // Works with coordinates or directly a point pair
-Game.prototype.adjacentIntersections = function (x, y) {
+GameEngine.prototype.adjacentIntersections = function (x, y) {
   var res = [];
 
   if (typeof x !== 'number') { y = x.y; x = x.x; }
@@ -113,7 +113,7 @@ Game.prototype.adjacentIntersections = function (x, y) {
 /*
  * Play a non-pass move (put a stone on the board)
  */
-Game.prototype.playStone = function (x, y) {
+GameEngine.prototype.playStone = function (x, y) {
   var self = this;
 
   if (!this.canPlay()) { return; }
@@ -131,7 +131,7 @@ Game.prototype.playStone = function (x, y) {
 
   var capturedStones = this.stonesCapturedByMove(x, y);
   capturedStones.forEach(function (stone) {
-    self.board[stone.x][stone.y] = Game.players.EMPTY;
+    self.board[stone.x][stone.y] = GameEngine.players.EMPTY;
     self.emit('intersection.cleared', { x: stone.x, y: stone.y });
   });
   this.captured[this.currentPlayer] += capturedStones.length;
@@ -164,7 +164,7 @@ Game.prototype.playStone = function (x, y) {
 /*
  * Pass
  */
-Game.prototype.pass = function () {
+GameEngine.prototype.pass = function () {
   if (!this.canPlay()) { return; }   // Nothing to play or replay
 
   var finished = false, move;
@@ -176,10 +176,10 @@ Game.prototype.pass = function () {
   }
 
   // Decide whether this pass finished the game
-  if (this.currentMove === 0 || (this.moves[this.currentMove - 1] !== Game.moves.END && this.moves[this.currentMove - 1] !== Game.moves.PASS)) {
-    move = Game.moves.PASS;
+  if (this.currentMove === 0 || (this.moves[this.currentMove - 1] !== GameEngine.moves.END && this.moves[this.currentMove - 1] !== GameEngine.moves.PASS)) {
+    move = GameEngine.moves.PASS;
   } else {
-    move = Game.moves.END;
+    move = GameEngine.moves.END;
     finished = true;
   }
 
@@ -201,15 +201,15 @@ Game.prototype.pass = function () {
 /*
  * Tells whether you can still play in that game branch
  */
-Game.prototype.canPlay = function () {
-  return (this.currentMove === 0 || this.moves[this.currentMove - 1] !== Game.moves.END);
+GameEngine.prototype.canPlay = function () {
+  return (this.currentMove === 0 || this.moves[this.currentMove - 1] !== GameEngine.moves.END);
 };
 
 
 /*
  * Checks whether the move can be played, leaving the board and goban unchanged
  */
-Game.prototype.isMoveValid = function (x, y) {
+GameEngine.prototype.isMoveValid = function (x, y) {
   var oppositeGroup, oppositeLiberties
     , oppositePlayer = this.getOppositePlayer()
     , capturesHappened = false
@@ -219,7 +219,7 @@ Game.prototype.isMoveValid = function (x, y) {
   if (typeof x !== 'number' || typeof y !== 'number') { return false; }
 
   // Check we are not playing on top of another stone
-  if (this.board[x][y] !== Game.players.EMPTY) { return false; }
+  if (this.board[x][y] !== GameEngine.players.EMPTY) { return false; }
 
   // Prevent playing a Ko
   if (this.currentKo && this.currentKo.x === x && this.currentKo.y === y) { return false; }
@@ -230,10 +230,10 @@ Game.prototype.isMoveValid = function (x, y) {
   // Check whether this move is a sacrifice
   this.board[x][y] = this.currentPlayer;   // Not very clean but much smaller and scoped anyway
   if (this.groupLiberties(this.getGroup(x, y)).length === 0) {
-    this.board[x][y] = Game.players.EMPTY;
+    this.board[x][y] = GameEngine.players.EMPTY;
     return false;
   } else {
-    this.board[x][y] = Game.players.EMPTY;
+    this.board[x][y] = GameEngine.players.EMPTY;
     return true;
   }
 
@@ -246,7 +246,7 @@ Game.prototype.isMoveValid = function (x, y) {
  * Will work whether the move has already been played or not
  * No duplicates in the list
  */
-Game.prototype.stonesCapturedByMove = function (x, y) {
+GameEngine.prototype.stonesCapturedByMove = function (x, y) {
   var _captures = {}
     , captures = []
     , self = this;
@@ -273,9 +273,9 @@ Game.prototype.stonesCapturedByMove = function (x, y) {
  * Linear in the number of board intersactions.
  * Return an empty list if intersection is empty or out of bounds.
  */
-Game.prototype.getGroupInternal = function (marks, player, x, y) {
+GameEngine.prototype.getGroupInternal = function (marks, player, x, y) {
   var group = [{ x: x, y: y }];
-  marks[x][y] = Game.players.EMPTY;
+  marks[x][y] = GameEngine.players.EMPTY;
 
   var self = this;
   this.adjacentIntersections(x, y).forEach(function (i) {
@@ -287,10 +287,10 @@ Game.prototype.getGroupInternal = function (marks, player, x, y) {
   return group;
 };
 
-Game.prototype.getGroup = function (x, y) {
+GameEngine.prototype.getGroup = function (x, y) {
   if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return []; }
   var player = this.board[x][y];
-  if (player === Game.players.EMPTY) { return []; }
+  if (player === GameEngine.players.EMPTY) { return []; }
 
   var marks = this.cloneBoard();
   return this.getGroupInternal(marks, player, x, y);
@@ -300,7 +300,7 @@ Game.prototype.getGroup = function (x, y) {
 /*
  * Given a group as a list of intersections, return the list of liberties
  */
-Game.prototype.groupLiberties = function (group) {
+GameEngine.prototype.groupLiberties = function (group) {
   var marks = this.cloneBoard()
     , liberties = []
     , self = this
@@ -308,9 +308,9 @@ Game.prototype.groupLiberties = function (group) {
 
   group.forEach(function(stone) {
     self.adjacentIntersections(stone).forEach(function (i) {
-      if (marks[i.x][i.y] === Game.players.EMPTY) {
+      if (marks[i.x][i.y] === GameEngine.players.EMPTY) {
         liberties.push({ x: i.x, y: i.y });
-        marks[i.x][i.y] = Game.players.BLACK;
+        marks[i.x][i.y] = GameEngine.players.BLACK;
       }
     });
   });
@@ -322,7 +322,7 @@ Game.prototype.groupLiberties = function (group) {
 /*
  * For now variations are not possible. If a variation is played the game will forget about the previous branch (see play function).
  */
-Game.prototype.backToMove = function (n) {
+GameEngine.prototype.backToMove = function (n) {
   var i, j;
 
   if (n > this.moves.length) { return; }
@@ -332,7 +332,7 @@ Game.prototype.backToMove = function (n) {
 
   this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
   for (var i = 0; i < n; i += 1) {
-    if (this.moves[i] === Game.moves.PASS || this.moves[i] === Game.moves.END) {
+    if (this.moves[i] === GameEngine.moves.PASS || this.moves[i] === GameEngine.moves.END) {
       this.pass();
     } else {
       this.playStone(this.moves[i].x, this.moves[i].y);
@@ -341,15 +341,15 @@ Game.prototype.backToMove = function (n) {
 
 };
 
-Game.prototype.back = function () {
+GameEngine.prototype.back = function () {
   this.backToMove(this.currentMove - 1);
 };
 
-Game.prototype.next = function () {
+GameEngine.prototype.next = function () {
   this.backToMove(this.currentMove + 1);
 };
 
 
 
 // Code shared on the server.
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') { module.exports = Game; }
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') { module.exports = GameEngine; }

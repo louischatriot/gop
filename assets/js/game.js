@@ -2,23 +2,23 @@ var gobanContainer = "#the-goban", hudContainer = "#hud";
 var canPlayColor = $('#can-play').html();
 var gameId = $('#game-id').html();
 var size = parseInt($('#size').html(), 10);
-var game = new Game({ size: size });
-var goban = new Goban({ size: size, container: gobanContainer, game: game, canPlayColor: canPlayColor });
+var gameEngine = new GameEngine({ size: size });
+var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var movesReceivedFromServer = {};
 
-game.on('intersection.cleared', function (i) {
+gameEngine.on('intersection.cleared', function (i) {
   goban.clearIntersection(i.x, i.y);
 });
 
-game.on('board.cleared', function () {
+gameEngine.on('board.cleared', function () {
   goban.clearBoard();
 });
 
-game.on('captured.change', function (m) {
+gameEngine.on('captured.change', function (m) {
   $(hudContainer + ' .captured-' + m.player).html(m.captured);
 });
 
-game.on('movePlayed', function (m) {
+gameEngine.on('movePlayed', function (m) {
   // Move played
   var msg;
   if (m.finished) {
@@ -35,9 +35,9 @@ game.on('movePlayed', function (m) {
 
   // Turn
   if (!m.finished) {
-    $(hudContainer + ' .turn').html('Turn: ' + game.getOppositePlayer(m.player));
+    $(hudContainer + ' .turn').html('Turn: ' + gameEngine.getOppositePlayer(m.player));
   } else {
-    $(hudContainer + ' .turn').html('Game finished');
+    $(hudContainer + ' .turn').html('game finished');
   }
 
   // Warn server if the move originates from the goban
@@ -46,23 +46,23 @@ game.on('movePlayed', function (m) {
   }
 });
 
-game.on('ko.new', function (m) {
+gameEngine.on('ko.new', function (m) {
   goban.drawStone('square', m.x, m.y);
 });
 
-$(hudContainer + ' .back').on('click', function () { game.back(); });
-$(hudContainer + ' .next').on('click', function () { game.next(); });
-$(hudContainer + ' .pass').on('click', function () { game.pass(); });
+$(hudContainer + ' .back').on('click', function () { gameEngine.back(); });
+$(hudContainer + ' .next').on('click', function () { gameEngine.next(); });
+$(hudContainer + ' .pass').on('click', function () { gameEngine.pass(); });
 
 $(document).on('keydown', function (evt) {
-  if (evt.keyCode === 37) { game.back(); }
-  if (evt.keyCode === 39) { game.next(); }
+  if (evt.keyCode === 37) { gameEngine.back(); }
+  if (evt.keyCode === 39) { gameEngine.next(); }
 });
 
 // Server warns us of a played move
 socket.on('game.movePlayed', function (m) {
   movesReceivedFromServer[m.x + '-' + m.y] = true;
-  game.playStone(m.x, m.y);
+  gameEngine.playStone(m.x, m.y);
 });
 
 
