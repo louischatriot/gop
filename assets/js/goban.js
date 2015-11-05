@@ -41,9 +41,17 @@ function Goban (_opts) {
   this.drawBoard();
 }
 
+Goban.dots = { '9': [{ x: 2, y: 2 }, { x: 2, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 6 }, { x: 4, y: 4 }]
+             , '13': [{ x: 3, y: 3 }, { x: 3, y: 9 }, { x: 9, y: 3 }, { x: 9, y: 9 }, { x: 6, y: 6 }]
+             , '19': [{ x: 3, y: 3 }, { x: 3, y: 9 }, { x: 3, y: 15 }, { x: 9, y: 3 }, { x: 9, y: 9 }, { x: 9, y: 15 }, { x: 15, y: 3 }, { x: 15, y: 9 }, { x: 15, y: 15 }]
+             };
+
 
 Goban.prototype.drawBoard = function () {
-  var $line;
+  var $line
+    , self = this
+    , dotSize = 1.3   // In percent of the board size
+    ;
 
   for (var i = 1; i <= this.size; i += 1) {
     $line = $('<div></div>');
@@ -55,6 +63,17 @@ Goban.prototype.drawBoard = function () {
     $line.addClass('goban-line-v');
     $line.css('left', ((i - 1) * this.stoneSizePercent) + '%');
     this.$container.append($line);
+  }
+
+  if (Goban.dots[this.size]) {
+    Goban.dots[this.size].forEach(function (dot) {
+      var $dot = $('<div class="goban-dot"></div>');
+      $dot.css('top', (dot.y * self.stoneSizePercent - (dotSize / 2)) + '%');
+      $dot.css('left', (dot.x * self.stoneSizePercent - (dotSize / 2)) + '%');
+      $dot.css('width', dotSize + '%');
+      $dot.css('height', dotSize + '%');
+      self.$container.append($dot);
+    });
   }
 };
 

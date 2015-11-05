@@ -216,6 +216,8 @@ Game.prototype.isMoveValid = function (x, y) {
     , self = this
     ;
 
+  if (typeof x !== 'number' || typeof y !== 'number') { return false; }
+
   // Check we are not playing on top of another stone
   if (this.board[x][y] !== Game.players.EMPTY) { return false; }
 

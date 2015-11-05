@@ -23,6 +23,12 @@
   border-left: solid black 1px;
 }
 
+.goban-dot {
+  position: absolute;
+  border-radius: 50%;
+  background-color: black;
+}
+
 .goban-stone-white {
   position: absolute;
   background-image: url("../img/white-stone.png");
