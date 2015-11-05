@@ -66,3 +66,14 @@ socket.on('game.movePlayed', function (m) {
 });
 
 
+
+// Replay moves if game was not finished
+var initialMoves = JSON.parse($('#moves').html());
+
+console.log("----TTT " + initialMoves.length);
+
+initialMoves.forEach(function (move) {
+  // TODO: handle passes and give ups
+  gameEngine.playStone(move.x, move.y);
+});
+
