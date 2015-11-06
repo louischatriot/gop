@@ -45,7 +45,6 @@ gameEngine.on('movePlayed', function (m) {
     $.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move } });
   }
 
-  console.log(m);
   updateHUDButtonsState();
 });
 

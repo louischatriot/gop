@@ -3,8 +3,6 @@ var listTemplate = $('#listTemplate').html()
   ;
 
 socket.on('games.change', function(m) {
-  console.log('------------');
-  console.log(m);
   $('#list').html(Mustache.render(listTemplate, m));
 });
 

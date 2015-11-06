@@ -6,11 +6,6 @@ block head
 block content
   h3 List of open challenges
   div#list
-  div#listTemplate(style="display: none;")
-    |<b>Open challenges</b><ul>
-    |{{#openChallenges}} <a href="/web/game/{{_id}}"><li>{{name}} - {{size}}x{{size}}</li></a> {{/openChallenges}}
-    |{{^openChallenges}} No open challenge {{/openChallenges}}
-    |</ul>
   div#listInitialData(style="display: none;")
     =openChallenges
 
