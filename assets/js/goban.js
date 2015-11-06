@@ -36,7 +36,15 @@ function Goban (_opts) {
   this.$container.append('<div class="shadow-stone-white"></div>');
   this.$container.append('<div class="shadow-stone-black"></div>');
   $(document).on('mousemove', function (e) { self.updateShadow(e.pageX - self.$container.offset().left, e.pageY - self.$container.offset().top); });
-  $(document).on('click', function (e) { self.handleClick(); });
+  $(document).on('click', function (e) { console.log(e);self.handleClick(); });
+
+  var te;
+  $(document).on('touchstart', function (e) { te = e; });
+  $(document).on('touchmove', function (e) { te = e; });
+  $(document).on('touchend', function (e) {
+    var touch = te.originalEvent.touches[0];
+    self.handleSwipe(touch.pageX - self.$container.offset().left, touch.pageY - self.$container.offset().top);
+  });
 
   this.drawBoard();
 }
@@ -141,6 +149,12 @@ Goban.prototype.handleClick = function () {
   }
 };
 
+Goban.prototype.handleSwipe = function (x_px, y_px) {
+  if (this.gameEngine.isGameFinished() || !this.userCanPlay()) { return; }
+  var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
+  var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
+  this.gameEngine.playStone(x, y);
+};
 
 
 
