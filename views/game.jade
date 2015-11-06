@@ -19,13 +19,15 @@ block content
         li #{game.blackPlayerName} (black): <span class="captured-black">0</span> captured
 
         li #{game.whitePlayerName} (white): <span class="captured-white">0</span> captured
-      button.btn.back
-        b &lt;
-      button.btn.next
-        b &gt;
+      //-button.btn.back
+        //-b &lt;
+      //-button.btn.next
+        //-b &gt;
       br
       br
       button.btn.pass Pass
+      button.btn.resign Resign
+
 
     div#can-play(style="display: none;") #{canPlay}
     div#game-id(style="display: none;") #{game._id}

@@ -1,7 +1,9 @@
 /*
  * Public API
+ * * gameEngine.play(move) - have current player play move, which can be placing a stone {x, y}, passing or resigning
  * * gameEngine.playStone(x, y) - have current player play a stone at x, y
  * * gameEngine.pass() - have current player pass
+ * * gameEngine.resign() - have the current player resign
  * * gameEngine.isMoveValid(x, y) - can the current player play a stone at x, y
  * * gameEngine.canPlay() - are there still moves to be played in the current branch
  * * gameEngine.currentPlayer
@@ -9,7 +11,7 @@
  *
  * Events emitted and payload
  * * movePlayed - a requested valid move was actually played and the gameEngine state updated
- *              { player, pass=[true|false|undefined], finished[true|false|undefined], x[optional], y[optional], moveNumber[0 means empty board] }
+ *              { player, finished[true|false|undefined], moveNumber[0 means initial board], move[{x,y}|PASS|RESIGN] }
  *
  * * captured.change - The number of captured stones for one player changed, send the amount and corresponding player
  *                   { player, captured }
@@ -32,7 +34,7 @@ function GameEngine (_opts) {
 }
 
 GameEngine.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
-GameEngine.moves = { PASS: 'pass', END: 'end' };
+GameEngine.moves = { PASS: 'pass', RESIGN: 'resign' };
 
 
 /*
@@ -116,18 +118,13 @@ GameEngine.prototype.adjacentIntersections = function (x, y) {
 GameEngine.prototype.playStone = function (x, y) {
   var self = this;
 
+  if (typeof x !== 'number' && y === undefined) { y = x.y; x = x.x; }   // playStone({x,y} signature was used
+
   if (!this.canPlay()) { return; }
-  if (! this.isMoveValid(x, y)) { return; }
+  if (!this.isMoveValid(x, y)) { return; }
 
-  // Check we are not breaking out of the current branch, forget it if it is the case
-  if (this.moves.length > this.currentMove && (this.moves[this.currentMove].x !== x || this.moves[this.currentMove].y !== y)) {
-    this.moves = this.moves.slice(0, this.currentMove);
-  }
-
-  if (this.currentKo) {
-    this.emit('intersection.cleared', { x: this.currentKo.x, y: this.currentKo.y });
-    delete this.currentKo;
-  }
+  this.removeCurrentKo();
+  this.checkMoveForBranch({ x: x, y: y });
 
   var capturedStones = this.stonesCapturedByMove(x, y);
   capturedStones.forEach(function (stone) {
@@ -142,7 +139,7 @@ GameEngine.prototype.playStone = function (x, y) {
   this.board[x][y] = this.currentPlayer;
   this.moves[this.currentMove] = { x: x, y: y };
   this.currentMove += 1;
-  this.emit('movePlayed', { moveNumber: this.currentMove, x: x, y: y, player: this.currentPlayer });
+  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, move: { x: x, y: y } });
 
   // Handle Ko situations
   if (capturedStones.length === 1) {
@@ -165,36 +162,55 @@ GameEngine.prototype.playStone = function (x, y) {
  * Pass
  */
 GameEngine.prototype.pass = function () {
-  if (!this.canPlay()) { return; }   // Nothing to play or replay
+  if (!this.canPlay()) { return; }
 
-  var finished = false, move;
-
-  // TODO: handle duplication with playStone
-  if (this.currentKo) {
-    this.emit('intersection.cleared', { x: this.currentKo.x, y: this.currentKo.y });
-    delete this.currentKo;
-  }
+  this.removeCurrentKo();
+  var finished = false;
 
   // Decide whether this pass finished the game
-  if (this.currentMove === 0 || (this.moves[this.currentMove - 1] !== GameEngine.moves.END && this.moves[this.currentMove - 1] !== GameEngine.moves.PASS)) {
-    move = GameEngine.moves.PASS;
-  } else {
-    move = GameEngine.moves.END;
+  if (!this.currentMove === 0 && this.moves[this.currentMove - 1] === GameEngine.moves.PASS) {
     finished = true;
   }
 
-  // Check we are not breaking out of the current branch, forget it if it is the case
-  // TODO: handle duplication with playStone
-  if (this.moves.length > this.currentMove && (this.moves[this.currentMove] !== move)) {
-    this.moves = this.moves.slice(0, this.currentMove);
-  }
+  this.checkMoveForBranch(GameEngine.moves.PASS);
 
   // Actually play the move
-  this.moves[this.currentMove] = move;
+  this.moves[this.currentMove] = GameEngine.moves.PASS;
   this.currentMove += 1;
-  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, pass: true, finished: finished });
+  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, move: GameEngine.moves.PASS, finished: finished });
 
   this.currentPlayer = this.getOppositePlayer();
+};
+
+
+/*
+ * Resign
+ */
+GameEngine.prototype.resign = function () {
+  if (!this.canPlay()) { return; }
+
+  this.removeCurrentKo();
+  this.checkMoveForBranch(GameEngine.moves.RESIGN);
+
+  this.moves[this.currentMove] = GameEngine.moves.RESIGN;
+  this.currentMove += 1;
+  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, move: GameEngine.moves.RESIGN, finished: true });
+
+  this.currentPlayer = this.getOppositePlayer();   // Not really necessary but more consistent
+};
+
+
+/**
+ * Play a move, can be {x,y}, PASS or RESIGN
+ */
+GameEngine.prototype.play = function (move) {
+  if (move === GameEngine.moves.PASS) {
+    this.pass();
+  } else if (move === GameEngine.moves.RESIGN) {
+    this.resign();
+  } else {
+    this.playStone(move.x, move.y);
+  }
 };
 
 
@@ -202,7 +218,39 @@ GameEngine.prototype.pass = function () {
  * Tells whether you can still play in that game branch
  */
 GameEngine.prototype.canPlay = function () {
-  return (this.currentMove === 0 || this.moves[this.currentMove - 1] !== GameEngine.moves.END);
+  if (this.currentMove === 0) { return true; }
+  if (this.moves[this.currentMove - 1] === GameEngine.moves.RESIGN) { return false; }
+  return !(this.currentMove > 1 && this.moves[this.currentMove - 1] === GameEngine.moves.PASS && this.moves[this.currentMove - 2] === GameEngine.moves.PASS);
+};
+
+
+/*
+ * Remove current ko if any
+ */
+GameEngine.prototype.removeCurrentKo = function () {
+  if (this.currentKo) {
+    this.emit('intersection.cleared', { x: this.currentKo.x, y: this.currentKo.y });
+    delete this.currentKo;
+  }
+};
+
+
+/*
+ * Check whether move breaks out of current branch, forget it if that's the case
+ * TODO: handle variations here
+ */
+GameEngine.prototype.checkMoveForBranch = function(move) {
+  if (this.moves.length === this.currentMove) { return; }   // current move is at the head of the moves list so it's not breaking out of any the branch
+
+  if (typeof move.x === 'number' && typeof move.y === 'number') {
+    if (this.moves[this.currentMove].x !== move.x || this.moves[this.currentMove].y !== move.y) {
+      this.moves = this.moves.slice(0, this.currentMove);
+    }
+  } else {
+    if (this.moves[this.currentMove] !== move) {
+      this.moves = this.moves.slice(0, this.currentMove);
+    }
+  }
 };
 
 
@@ -332,7 +380,7 @@ GameEngine.prototype.backToMove = function (n) {
 
   this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
   for (var i = 0; i < n; i += 1) {
-    if (this.moves[i] === GameEngine.moves.PASS || this.moves[i] === GameEngine.moves.END) {
+    if (this.moves[i] === GameEngine.moves.PASS) {
       this.pass();
     } else {
       this.playStone(this.moves[i].x, this.moves[i].y);
