@@ -38,6 +38,7 @@ function Goban (_opts) {
   $(document).on('mousemove', function (e) { self.updateShadow(e.pageX - self.$container.offset().left, e.pageY - self.$container.offset().top); });
   $(document).on('click', function (e) { console.log(e);self.handleClick(); });
 
+  // TODO: Don't fire event if double touch
   var te;
   $(document).on('touchstart', function (e) { te = e; });
   $(document).on('touchmove', function (e) { te = e; });
