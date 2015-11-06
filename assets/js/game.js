@@ -19,9 +19,6 @@ gameEngine.on('captured.change', function (m) {
 });
 
 gameEngine.on('movePlayed', function (m) {
-  console.log('MOVE WAS PLAYED');
-  console.log(m);
-
   // Move played
   var msg;
   if (m.currentMove === 0) {
@@ -45,8 +42,6 @@ gameEngine.on('movePlayed', function (m) {
 
   // Warn server if the move originates from the goban
   if (m.moveNumber > movesKnownByServer.length) {
-    console.log('Send move');
-    console.log(m.move);
     $.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move } });
   }
 });
@@ -67,24 +62,13 @@ $(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
 
 // Server warns us of a played move
 socket.on('game.movePlayed', function (m) {
-  console.log('RECEIVED MOVE');
-  console.log(m);
-
-  if (typeof m.move.x !== 'number' && typeof m.move.y !== 'number') {
-    m.move.x = parseInt(m.move.x, 10);
-    m.move.y = parseInt(m.move.y, 10);
-  }
-
-  if (m.moveNumber > movesKnownByServer.length) {
-    console.log('Thats a new move');
-    movesKnownByServer.push(m.move);
-    gameEngine.play(m.move);
-  }
+  movesKnownByServer = m.moves
+  gameEngine.refreshGameMoves(movesKnownByServer);
 });
 
 
 
-// Replay moves if game was not finished
+// Replay moves if game is not finished and is reloaded
 movesKnownByServer = JSON.parse($('#moves').html());
 movesKnownByServer.forEach(function (move) {
   gameEngine.play(move);

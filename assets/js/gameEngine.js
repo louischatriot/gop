@@ -398,6 +398,18 @@ GameEngine.prototype.next = function () {
 };
 
 
+/**
+ * Refreshes entire game move tree (signel-branch one)
+ * Currently used to synchronize with server
+ */
+GameEngine.prototype.refreshGameMoves = function (moves) {
+  var self = this;
+  this.moves = []
+  moves.forEach(function (move) { self.moves.push(move); });
+  this.backToMove(this.moves.length);
+};
+
+
 
 // Code shared on the server.
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') { module.exports = GameEngine; }
