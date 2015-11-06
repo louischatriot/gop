@@ -5,13 +5,13 @@
  * * gameEngine.pass() - have current player pass
  * * gameEngine.resign() - have the current player resign
  * * gameEngine.isMoveValid(x, y) - can the current player play a stone at x, y
- * * gameEngine.canPlay() - are there still moves to be played in the current branch
+ * * gameEngine.isGameFinished() - is the game finished in the current branch
  * * gameEngine.currentPlayer
  * * gameEngine.getOppositePlayer(player[optional]) - if player specified, get his opponent, otherwise get the current player's opponent
  *
  * Events emitted and payload
- * * movePlayed - a requested valid move was actually played and the gameEngine state updated
- *              { player, finished[true|false|undefined], moveNumber[0 means initial board], move[{x,y}|PASS|RESIGN] }
+ * * movePlayed - a requested valid move was actually played and the gameEngine state updated. The event is fired after the gameEngine state is fully up to date
+ *              { player, moveNumber[0 means initial board], move[{x,y}|PASS|RESIGN] }
  *
  * * captured.change - The number of captured stones for one player changed, send the amount and corresponding player
  *                   { player, captured }
@@ -120,7 +120,7 @@ GameEngine.prototype.playStone = function (x, y) {
 
   if (typeof x !== 'number' && y === undefined) { y = x.y; x = x.x; }   // playStone({x,y} signature was used
 
-  if (!this.canPlay()) { return; }
+  if (this.isGameFinished()) { return; }
   if (!this.isMoveValid(x, y)) { return; }
 
   this.removeCurrentKo();
@@ -139,7 +139,8 @@ GameEngine.prototype.playStone = function (x, y) {
   this.board[x][y] = this.currentPlayer;
   this.moves[this.currentMove] = { x: x, y: y };
   this.currentMove += 1;
-  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, move: { x: x, y: y } });
+  this.currentPlayer = this.getOppositePlayer();
+  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.getOppositePlayer(), move: { x: x, y: y } });
 
   // Handle Ko situations
   if (capturedStones.length === 1) {
@@ -152,9 +153,6 @@ GameEngine.prototype.playStone = function (x, y) {
       }
     }
   }
-
-  // Move played, switch to next player
-  this.currentPlayer = this.getOppositePlayer();
 };
 
 
@@ -162,24 +160,16 @@ GameEngine.prototype.playStone = function (x, y) {
  * Pass
  */
 GameEngine.prototype.pass = function () {
-  if (!this.canPlay()) { return; }
+  if (this.isGameFinished()) { return; }
 
   this.removeCurrentKo();
-  var finished = false;
-
-  // Decide whether this pass finished the game
-  if (!this.currentMove === 0 && this.moves[this.currentMove - 1] === GameEngine.moves.PASS) {
-    finished = true;
-  }
-
   this.checkMoveForBranch(GameEngine.moves.PASS);
 
   // Actually play the move
   this.moves[this.currentMove] = GameEngine.moves.PASS;
   this.currentMove += 1;
-  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, move: GameEngine.moves.PASS, finished: finished });
-
   this.currentPlayer = this.getOppositePlayer();
+  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.getOppositePlayer(), move: GameEngine.moves.PASS });
 };
 
 
@@ -187,16 +177,15 @@ GameEngine.prototype.pass = function () {
  * Resign
  */
 GameEngine.prototype.resign = function () {
-  if (!this.canPlay()) { return; }
+  if (this.isGameFinished()) { return; }
 
   this.removeCurrentKo();
   this.checkMoveForBranch(GameEngine.moves.RESIGN);
 
   this.moves[this.currentMove] = GameEngine.moves.RESIGN;
   this.currentMove += 1;
-  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.currentPlayer, move: GameEngine.moves.RESIGN, finished: true });
-
   this.currentPlayer = this.getOppositePlayer();   // Not really necessary but more consistent
+  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.getOppositePlayer(), move: GameEngine.moves.RESIGN });
 };
 
 
@@ -217,10 +206,10 @@ GameEngine.prototype.play = function (move) {
 /*
  * Tells whether you can still play in that game branch
  */
-GameEngine.prototype.canPlay = function () {
-  if (this.currentMove === 0) { return true; }
-  if (this.moves[this.currentMove - 1] === GameEngine.moves.RESIGN) { return false; }
-  return !(this.currentMove > 1 && this.moves[this.currentMove - 1] === GameEngine.moves.PASS && this.moves[this.currentMove - 2] === GameEngine.moves.PASS);
+GameEngine.prototype.isGameFinished = function () {
+  if (this.currentMove === 0) { return false; }
+  if (this.moves[this.currentMove - 1] === GameEngine.moves.RESIGN) { return true; }
+  return (this.currentMove > 1 && this.moves[this.currentMove - 1] === GameEngine.moves.PASS && this.moves[this.currentMove - 2] === GameEngine.moves.PASS);
 };
 
 
@@ -380,11 +369,7 @@ GameEngine.prototype.backToMove = function (n) {
 
   this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
   for (var i = 0; i < n; i += 1) {
-    if (this.moves[i] === GameEngine.moves.PASS) {
-      this.pass();
-    } else {
-      this.playStone(this.moves[i].x, this.moves[i].y);
-    }
+    this.play(this.moves[i]);
   }
 
 };

@@ -106,7 +106,7 @@ Goban.prototype.userCanPlay = function () {
 
 
 Goban.prototype.updateShadow = function (x_px, y_px) {
-  if (!this.gameEngine.canPlay() || !this.userCanPlay()) {
+  if (this.gameEngine.isGameFinished() || !this.userCanPlay()) {
     this.$container.find('.shadow-stone-white').css('display', 'none');
     this.$container.find('.shadow-stone-black').css('display', 'none');
     return;
@@ -135,7 +135,7 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 };
 
 Goban.prototype.handleClick = function () {
-  if (this.currentX !== undefined && this.currentY !== undefined && this.gameEngine.canPlay() && this.userCanPlay()) {
+  if (this.currentX !== undefined && this.currentY !== undefined && !this.gameEngine.isGameFinished() && this.userCanPlay()) {
     this.gameEngine.playStone(this.currentX, this.currentY);
     return;
   }

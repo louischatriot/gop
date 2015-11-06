@@ -34,16 +34,19 @@ gameEngine.on('movePlayed', function (m) {
   $(hudContainer + ' .move-number').html(msg);
 
   // Turn
-  if (!m.finished) {
-    $(hudContainer + ' .turn').html('Turn: ' + gameEngine.getOppositePlayer(m.player));
-  } else {
+  if (gameEngine.isGameFinished()) {
     $(hudContainer + ' .turn').html('Game finished');
+  } else {
+    $(hudContainer + ' .turn').html('Turn: ' + gameEngine.getOppositePlayer(m.player));
   }
 
   // Warn server if the move originates from the goban
   if (m.moveNumber > movesKnownByServer.length) {
     $.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move } });
   }
+
+  console.log(m);
+  updateHUDButtonsState();
 });
 
 gameEngine.on('ko.new', function (m) {
@@ -60,12 +63,24 @@ $(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
   //if (evt.keyCode === 39) { gameEngine.next(); }
 //});
 
-// Server warns us of a played move
+
+// Server warns us of a played move by sending back the whole game moves state (inefficient of course, to be improved if this is a bottleneck)
 socket.on('game.movePlayed', function (m) {
   movesKnownByServer = m.moves
   gameEngine.refreshGameMoves(movesKnownByServer);
 });
 
+
+// Activate/deactivate buttons depending on turn and game state
+function updateHUDButtonsState () {
+  if (gameEngine.currentPlayer === canPlayColor && !gameEngine.isGameFinished()) {
+    $(hudContainer + ' .pass').prop('disabled', false);
+    $(hudContainer + ' .resign').prop('disabled', false);
+  } else {
+    $(hudContainer + ' .pass').prop('disabled', true);
+    $(hudContainer + ' .resign').prop('disabled', true);
+  }
+}
 
 
 // Replay moves if game is not finished and is reloaded
@@ -73,4 +88,4 @@ movesKnownByServer = JSON.parse($('#moves').html());
 movesKnownByServer.forEach(function (move) {
   gameEngine.play(move);
 });
-
+updateHUDButtonsState();
