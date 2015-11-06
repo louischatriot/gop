@@ -1,22 +1,21 @@
 extends layout
 
 block navbarContents
-  div#navbar(class="collapse nav-collapse")
-    ul(class="nav")
-      li
-        a(href="#",id="create-game") Create game
-      li
-        a(href="/web/open-challenges") Open challenges
-      li
-        a(href="/web/games") Current games
-      li
-        a(href="/web/players") Players
+  ul(class="nav")
+    li
+      a(href="#",id="create-game") Create game
+    li
+      a(href="/web/open-challenges") Open challenges
+    li
+      a(href="/web/games") Current games
+    li
+      a(href="/web/players") Players
 
-    ul.pull-right.nav
-      li
-        a= username
-      li
-        a(href="/logout") (logout)
+  ul.pull-right.nav
+    li
+      a= username
+    li
+      a(href="/logout") (logout)
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/create-challenge.js")

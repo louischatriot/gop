@@ -11,11 +11,16 @@ html(lang="en")
     block head
 
   body
-    div(class="navbar navbar-inverse navbar-fixed-top", role="navigation")
-      div(class="navbar-inner")
+    div.navbar.navbar-inverse
+      div.navbar-inner
         div.container
-          span.brand LMT.IO
-          block navbarContents
+          a.btn.btn-navbar(data-toggle="collapse", data-target=".nav-collapse")
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+          a.brand(href="#") BLOUP
+          div.nav-collapse
+            block navbarContents
 
     div.container
       block content
