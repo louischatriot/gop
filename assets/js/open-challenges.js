@@ -21,7 +21,6 @@ function updateList(data) {
 
   $('tbody tr').css('cursor', 'pointer');
 
-
   // Super convoluted, but only way to mimic mouse actions behavior
   $('tr').on('mousedown', function (evt) {
     var url = $(evt.currentTarget).attr('href');
