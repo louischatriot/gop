@@ -25,11 +25,11 @@ function updateList(data) {
   $('tr').on('mousedown', function (evt) {
     var url = $(evt.currentTarget).attr('href');
 
-      var evt = document.createEvent("MouseEvents");
-      evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, true, false, false, false, 0, null);
-      document.getElementById('ghost-link').dispatchEvent(evt);
+      //var evt = document.createEvent("MouseEvents");
+      //evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, true, false, false, false, 0, null);
+      //document.getElementById('ghost-link').dispatchEvent(evt);
 
-      return;
+      //return;
 
 
     if (evt.which === 1) {
