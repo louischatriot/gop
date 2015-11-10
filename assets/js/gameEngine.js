@@ -253,20 +253,11 @@ GameEngine.prototype.playStone = function (x, y) {
   this.captured[this.currentPlayer] += capturedStones.length;
   this.emit('captured.change', { player: this.currentPlayer, captured: this.captured[this.currentPlayer] });
 
-
   // Actually play the move
   this.board[x][y] = this.currentPlayer;
-
-
-  //this.moves[this.currentMove] = { x: x, y: y };
-
   this.maxMoveNumber += 1;
   this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.STONE, this.currentPlayer, x, y);
   this.allMoves[this.maxMoveNumber] = this.currentMove;
-
-  //this.currentMove += 1;
-
-
   this.currentPlayer = this.getOppositePlayer();
   this.emit('movePlayed', { moveNumber: this.currentMove.depth, player: this.getOppositePlayer(), move: { x: x, y: y } });
 
@@ -292,15 +283,9 @@ GameEngine.prototype.pass = function () {
 
   this.removeCurrentKo();
 
-  // Actually play the move
   this.maxMoveNumber += 1;
   this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.PASS, this.currentPlayer);
   this.allMoves[this.maxMoveNumber] = this.currentMove;
-
-  //this.moves[this.currentMove] = GameEngine.moves.PASS;
-  //this.currentMove += 1;
-
-
   this.currentPlayer = this.getOppositePlayer();
   this.emit('movePlayed', { moveNumber: this.maxMoveNumber, player: this.getOppositePlayer(), move: GameEngine.moves.PASS });
 };
@@ -314,14 +299,9 @@ GameEngine.prototype.resign = function () {
 
   this.removeCurrentKo();
 
-  //this.moves[this.currentMove] = GameEngine.moves.RESIGN;
-  //this.currentMove += 1;
-
   this.maxMoveNumber += 1;
   this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.RESIGN, this.currentPlayer);
   this.allMoves[this.maxMoveNumber] = this.currentMove;
-
-
   this.currentPlayer = this.getOppositePlayer();   // Not really necessary but more consistent
   this.emit('movePlayed', { moveNumber: this.maxMoveNumber, player: this.getOppositePlayer(), move: GameEngine.moves.RESIGN });
 };

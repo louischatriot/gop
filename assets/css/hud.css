@@ -36,4 +36,6 @@
   position: absolute;
   background-image: url("../img/square.png");
   background-size: cover;
+  box-sizing: border-box;
 }
+

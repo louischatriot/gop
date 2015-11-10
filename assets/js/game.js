@@ -99,10 +99,10 @@ function updateHUDButtonsState () {
 /**
  * Such an evocative name
  */
-function redrawGameTree(m) {
+function redrawGameTree() {
   // Dev
   var dotSize = 30;   // In pixels
-  var dotSpacing = 25;   // In pixels
+  var dotSpacing = 15;   // In pixels
   var $movesContainer = $('#moves .inner');
   $movesContainer.width(2000);
   $movesContainer.height(400);
@@ -164,7 +164,13 @@ function redrawGameTree(m) {
     // Lines
     move.parent && $('#moves .inner').line(xPos(move), yPos(move) + (dotSize / 2), xPos(move.parent) + dotSize, yPos(move.parent) + (dotSize / 2));
   });
+
+  // Highlight current move
+  $movesContainer.find('div[data-n=' + gameEngine.currentMove.n + ']').css('border', 'solid red 3px');
 }
+
+
+redrawGameTree();
 
 
 
