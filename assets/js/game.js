@@ -104,12 +104,10 @@ function redrawGameTree() {
   var dotSize = 30;   // In pixels
   var dotSpacing = 15;   // In pixels
   var $movesContainer = $('#moves .inner');
-  $movesContainer.width(2000);
-  $movesContainer.height(400);
   $movesContainer.html('');
 
-  function xPos (move) { return 20 + move.depth * (dotSize + dotSpacing); }
-  function yPos (move) { return 20 + move.yPos * (dotSize + dotSpacing); }
+  function xPos (move) { return dotSpacing + move.depth * (dotSize + dotSpacing); }
+  function yPos (move) { return dotSpacing + move.yPos * (dotSize + dotSpacing); }
 
   var tree = gameEngine.movesRoot.createCopy();
 
@@ -119,10 +117,12 @@ function redrawGameTree() {
   // Assign to yPos the minimum possible y position (in stone + spacing length)
   // Keep in mind which nodes are on the same depth for "horizontalization" step
   var nexts = [];
+  var maxYPos = 0;
   for (var i = 0; i <= maxDepth; i += 1) { nexts.push(0); }
   tree.traverse(function (move) {
     move.yPos = nexts[move.depth];
     nexts[move.depth] += 1;
+    maxYPos = Math.max(maxYPos, move.yPos);
   });
 
   // "Horizontalize" graph
@@ -167,6 +167,11 @@ function redrawGameTree() {
 
   // Highlight current move
   $movesContainer.find('div[data-n=' + gameEngine.currentMove.n + ']').css('border', 'solid red 3px');
+
+  // Set inner box dimensions to fit the graph and focus graph on current move
+  $movesContainer.width(dotSpacing + (maxDepth + 1) * (dotSize + dotSpacing));
+  $movesContainer.parent().scrollLeft(xPos(gameEngine.currentMove) - ($movesContainer.parent().width() / 2));
+  $movesContainer.height(300);
 }
 
 
