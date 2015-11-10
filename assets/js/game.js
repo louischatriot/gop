@@ -39,6 +39,7 @@ gameEngine.on('movePlayed', function (m) {
   //}
 
   updateHUDButtonsState();
+  redrawGameTree();
 });
 
 gameEngine.on('ko.new', function (m) {
@@ -92,86 +93,78 @@ function updateHUDButtonsState () {
 
 
 
-// Dev
-var dotSize = 30;   // In pixels
-var dotSpacing = 25;   // In pixels
-var $movesContainer = $('#moves .inner');
-$movesContainer.width(2000);
-$movesContainer.height(400);
-
-function createHudDot (color, label) {
-  var $dot = $('<div class="hud-stone-' + color + '"><div style="display: table-cell; vertical-align: middle;">' + label + '</div></div>');
-  $dot.width(dotSize);
-  $dot.height(dotSize);
-  return $dot;
-}
-
-
-var $dot = createHudDot('white', 142);
-
-$dot.css('left', '50px');
-$dot.css('top', '50px');
-
-
-//$movesContainer.append($dot);
 
 
 
-function xPos (move) { return 20 + move.depth * (dotSize + dotSpacing); }
-function yPos (move) { return 20 + move.yPos * (dotSize + dotSpacing); }
+/**
+ * Such an evocative name
+ */
+function redrawGameTree(m) {
+  // Dev
+  var dotSize = 30;   // In pixels
+  var dotSpacing = 25;   // In pixels
+  var $movesContainer = $('#moves .inner');
+  $movesContainer.width(2000);
+  $movesContainer.height(400);
+  $movesContainer.html('');
 
+  function xPos (move) { return 20 + move.depth * (dotSize + dotSpacing); }
+  function yPos (move) { return 20 + move.yPos * (dotSize + dotSpacing); }
 
-var tree = m.createCopy();
+  var tree = gameEngine.movesRoot.createCopy();
 
-var maxDepth = 0;
-tree.traverse(function (move) { maxDepth = Math.max(maxDepth, move.depth); });
+  var maxDepth = 0;
+  tree.traverse(function (move) { maxDepth = Math.max(maxDepth, move.depth); });
 
-// Assign to yPos the minimum possible y position (in stone + spacing length)
-// Keep in mind which nodes are on the same depth for "horizontalization" step
-var nexts = [];
-for (var i = 0; i <= maxDepth; i += 1) { nexts.push(0); }
-tree.traverse(function (move) {
-  move.yPos = nexts[move.depth];
-  nexts[move.depth] += 1;
-});
+  // Assign to yPos the minimum possible y position (in stone + spacing length)
+  // Keep in mind which nodes are on the same depth for "horizontalization" step
+  var nexts = [];
+  for (var i = 0; i <= maxDepth; i += 1) { nexts.push(0); }
+  tree.traverse(function (move) {
+    move.yPos = nexts[move.depth];
+    nexts[move.depth] += 1;
+  });
 
-// "Horizontalize" graph
-var depths = [];
-tree.traverse(function (move) {
-  if (!depths[move.depth]) { depths[move.depth] = []; }
-  depths[move.depth].push(move);
-});
-tree.traverse(function (move) {
-  if (!move.parent) { return; }
+  // "Horizontalize" graph
+  var depths = [];
+  tree.traverse(function (move) {
+    if (!depths[move.depth]) { depths[move.depth] = []; }
+    depths[move.depth].push(move);
+  });
+  tree.traverse(function (move) {
+    if (!move.parent) { return; }
 
-  var delta = move.parent.yPos - move.yPos;
-  if (delta > 0) {
-    var begun = false;
-    depths[move.depth].forEach(function (m) {
-      if (m === move) { begun = true; }
-      if (begun) {
-        m.yPos += delta;
-      }
+    var delta = move.parent.yPos - move.yPos;
+    if (delta > 0) {
+      var begun = false;
+      depths[move.depth].forEach(function (m) {
+        if (m === move) { begun = true; }
+        if (begun) {
+          m.yPos += delta;
+        }
+      });
+    }
+  });
+
+  // Display stones and lines
+  tree.traverse(function (move) {
+    // Stones
+    var $dot = $('<div data-n="' + move.n + '" class="hud-stone-' + move.player + '"><div style="display: table-cell; vertical-align: middle;">' + ((move.player === 'white' || move.player === 'black') ? move.depth : '') + '</div></div>');
+    $dot.width(dotSize);
+    $dot.height(dotSize);
+    $dot.css('left', xPos(move) + 'px');
+    $dot.css('top', yPos(move) + 'px');
+    $dot.css('cursor', 'pointer');
+    $dot.on('click', function (evt) {
+      var n = $(evt.target).parent().data('n') || $(evt.target).data('n');   // So evil
+      gameEngine.backToMove(parseInt(n, 10));
     });
-  }
-});
+    $movesContainer.append($dot);
 
-// Display stones and lines
-tree.traverse(function (move) {
-  // Stones
-  var $dot = createHudDot('black', move.n);
-  $dot.css('left', xPos(move) + 'px');
-  $dot.css('top', yPos(move) + 'px');
-  $movesContainer.append($dot);
-
-  // Lines
-  move.parent && $('#moves .inner').line(xPos(move), yPos(move) + (dotSize / 2), xPos(move.parent) + dotSize, yPos(move.parent) + (dotSize / 2));
-});
-
-
-
-
-
+    // Lines
+    move.parent && $('#moves .inner').line(xPos(move), yPos(move) + (dotSize / 2), xPos(move.parent) + dotSize, yPos(move.parent) + (dotSize / 2));
+  });
+}
 
 
 

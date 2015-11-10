@@ -4,15 +4,16 @@
  * If type is not specified it is implied to be STONE
  * x and y are needed online for type STONE
  */
-function Move (n, type, x, y) {
+function Move (n, type, player, x, y) {
   this.n = n;
   this.type = type || Move.types.STONE;
   if (typeof x === 'number') { this.x = x; }
   if (typeof y === 'number') { this.y = y; }
+  this.player = player || 'empty';
   this.depth = 0;
 }
 
-Move.types = { STONE: 'stone', PASS: 'pass', RESIGN: 'resign' };
+Move.types = { STONE: 'stone', PASS: 'pass', RESIGN: 'resign', EMPTY: 'empty' };
 
 
 /**
@@ -37,6 +38,7 @@ Move.prototype.getDepth = function () {
 Move.prototype.isEqualTo = function (move, strict) {
   if (strict && this.n !== move.n) { return false; }
   if (this.type !== move.type) { return false; }
+  if (this.player !== move.player) { return false; }
   if (this.type === Move.types.STONE) {
     return this.x === move.x && this.y === move.y;
   } else {
@@ -48,16 +50,16 @@ Move.prototype.isEqualTo = function (move, strict) {
 /**
  * Add a child to the move, returning the child
  */
-Move.prototype.addChild = function (n, type, x, y) {
-  if (n.constructor && n.constructor.name === 'Move') { return this.addChild(n.n, n.type, n.x, n.y); }
+Move.prototype.addChild = function (n, type, player, x, y) {
+  if (n.constructor && n.constructor.name === 'Move') { return this.addChild(n.n, n.type, n.player, n.x, n.y); }
 
   if (!this.children) { this.children = []; }
 
   var child;
-  this.children.forEach(function (c) { if (c.isEqualTo(new Move(0, type, x, y), false)) { child = c; } });
+  this.children.forEach(function (c) { if (c.isEqualTo(new Move(0, type, player, x, y), false)) { child = c; } });
 
   if (!child) {
-    child = new Move(n, type, x, y);
+    child = new Move(n, type, player, x, y);
     child.parent = this;
     this.children.push(child);
     child.depth = this.depth + 1;
@@ -68,7 +70,7 @@ Move.prototype.addChild = function (n, type, x, y) {
 
 
 Move.prototype.createCopy = function () {
-  var move = new Move(this.n, this.type, this.x, this.y);
+  var move = new Move(this.n, this.type, this.player, this.x, this.y);
 
   if (this.children) {
     move.children = [];
@@ -108,45 +110,6 @@ Move.prototype.print = function (indent) {
     this.children.forEach(function (c) { c.print(indent + '  '); });
   }
 };
-
-
-
-//var m = new Move(0, Move.types.STONE, 4, 5);
-//var c;
-
-//c = m.addChild(1, Move.types.STONE, 3, 2);
-//c = c.addChild(2, Move.types.STONE, 3, 15);
-//c.addChild(3, Move.types.STONE, 4, 15);
-//var c2 = c.addChild(4, Move.types.STONE, 5, 15);
-//c.addChild(5, Move.types.STONE, 6, 15);
-
-//c2 = c2.addChild(6, Move.types.STONE, 3, 11);
-//c2 = c2.addChild(7, Move.types.STONE, 3, 12);
-
-
-
-var m = new Move(0, Move.types.STONE, 0, 0);
-var c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17;
-
-c1 = m.addChild(1, Move.types.STONE, 1, 1);
-c2 = c1.addChild(2, Move.types.STONE, 2, 1);
-c3 = c1.addChild(3, Move.types.STONE, 3, 1);
-c4 = c3.addChild(4, Move.types.STONE, 4, 1);
-c5 = c4.addChild(5, Move.types.STONE, 5, 1);
-c6 = c4.addChild(6, Move.types.STONE, 6, 1);
-c7 = c3.addChild(7, Move.types.STONE, 7, 1);
-c8 = c7.addChild(8, Move.types.STONE, 8, 1);
-c9 = c3.addChild(9, Move.types.STONE, 9, 1);
-c10 = m.addChild(10, Move.types.STONE, 10, 1);
-c11 = c10.addChild(11, Move.types.STONE, 11, 1);
-c12 = c10.addChild(12, Move.types.STONE, 12, 1);
-c13 = c12.addChild(13, Move.types.STONE, 13, 1);
-c14 = c13.addChild(14, Move.types.STONE, 14, 1);
-c15 = c12.addChild(15, Move.types.STONE, 15, 1);
-c16 = c12.addChild(16, Move.types.STONE, 16, 1);
-c17 = c16.addChild(17, Move.types.STONE, 17, 1);
-
-var copy = m.createCopy();
 
 
 /**
@@ -207,8 +170,14 @@ GameEngine.prototype.initialize = function (hard) {
   this.captured[GameEngine.players.BLACK] = 0;
   this.captured[GameEngine.players.WHITE] = 0;
 
-  if (hard) { this.moves = []; }
-  this.currentMove = 0;   // Move 0 is empty board
+  if (hard) {
+    this.movesRoot = new Move(0, Move.types.EMPTY);
+    this.allMoves = {};
+    this.allMoves[0] = this.movesRoot;
+    this.maxMoveNumber = 0;   // Not necessarily sequential
+  }
+  this.currentMove = this.movesRoot;   // Move 0 is empty board
+
   delete this.currentKo;   // Necessary for reinitializations
 };
 
@@ -275,7 +244,6 @@ GameEngine.prototype.playStone = function (x, y) {
   if (!this.isMoveValid(x, y)) { return; }
 
   this.removeCurrentKo();
-  this.checkMoveForBranch({ x: x, y: y });
 
   var capturedStones = this.stonesCapturedByMove(x, y);
   capturedStones.forEach(function (stone) {
@@ -288,10 +256,19 @@ GameEngine.prototype.playStone = function (x, y) {
 
   // Actually play the move
   this.board[x][y] = this.currentPlayer;
-  this.moves[this.currentMove] = { x: x, y: y };
-  this.currentMove += 1;
+
+
+  //this.moves[this.currentMove] = { x: x, y: y };
+
+  this.maxMoveNumber += 1;
+  this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.STONE, this.currentPlayer, x, y);
+  this.allMoves[this.maxMoveNumber] = this.currentMove;
+
+  //this.currentMove += 1;
+
+
   this.currentPlayer = this.getOppositePlayer();
-  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.getOppositePlayer(), move: { x: x, y: y } });
+  this.emit('movePlayed', { moveNumber: this.currentMove.depth, player: this.getOppositePlayer(), move: { x: x, y: y } });
 
   // Handle Ko situations
   if (capturedStones.length === 1) {
@@ -314,13 +291,18 @@ GameEngine.prototype.pass = function () {
   if (this.isGameFinished()) { return; }
 
   this.removeCurrentKo();
-  this.checkMoveForBranch(GameEngine.moves.PASS);
 
   // Actually play the move
-  this.moves[this.currentMove] = GameEngine.moves.PASS;
-  this.currentMove += 1;
+  this.maxMoveNumber += 1;
+  this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.PASS, this.currentPlayer);
+  this.allMoves[this.maxMoveNumber] = this.currentMove;
+
+  //this.moves[this.currentMove] = GameEngine.moves.PASS;
+  //this.currentMove += 1;
+
+
   this.currentPlayer = this.getOppositePlayer();
-  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.getOppositePlayer(), move: GameEngine.moves.PASS });
+  this.emit('movePlayed', { moveNumber: this.maxMoveNumber, player: this.getOppositePlayer(), move: GameEngine.moves.PASS });
 };
 
 
@@ -331,12 +313,17 @@ GameEngine.prototype.resign = function () {
   if (this.isGameFinished()) { return; }
 
   this.removeCurrentKo();
-  this.checkMoveForBranch(GameEngine.moves.RESIGN);
 
-  this.moves[this.currentMove] = GameEngine.moves.RESIGN;
-  this.currentMove += 1;
+  //this.moves[this.currentMove] = GameEngine.moves.RESIGN;
+  //this.currentMove += 1;
+
+  this.maxMoveNumber += 1;
+  this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.RESIGN, this.currentPlayer);
+  this.allMoves[this.maxMoveNumber] = this.currentMove;
+
+
   this.currentPlayer = this.getOppositePlayer();   // Not really necessary but more consistent
-  this.emit('movePlayed', { moveNumber: this.currentMove, player: this.getOppositePlayer(), move: GameEngine.moves.RESIGN });
+  this.emit('movePlayed', { moveNumber: this.maxMoveNumber, player: this.getOppositePlayer(), move: GameEngine.moves.RESIGN });
 };
 
 
@@ -344,23 +331,27 @@ GameEngine.prototype.resign = function () {
  * Play a move, can be {x,y}, PASS or RESIGN
  */
 GameEngine.prototype.play = function (move) {
-  if (move === GameEngine.moves.PASS) {
-    this.pass();
-  } else if (move === GameEngine.moves.RESIGN) {
-    this.resign();
-  } else {
-    this.playStone(move.x, move.y);
+  switch (move.type) {
+    case Move.types.PASS:
+      this.pass();
+      break;
+    case Move.types.RESIGN:
+      this.resign();
+      break;
+    case Move.types.STONE:
+      this.playStone(move.x, move.y);
+      break;
   }
 };
 
 
 /*
- * Tells whether you can still play in that game branch
+ * Tells whether game is finished at the current move (double pass or resign)
  */
 GameEngine.prototype.isGameFinished = function () {
-  if (this.currentMove === 0) { return false; }
-  if (this.moves[this.currentMove - 1] === GameEngine.moves.RESIGN) { return true; }
-  return (this.currentMove > 1 && this.moves[this.currentMove - 1] === GameEngine.moves.PASS && this.moves[this.currentMove - 2] === GameEngine.moves.PASS);
+  if (this.currentMove.type === Move.types.RESIGN) { return true; }
+  if (!this.currentMove.parent) { return false; }
+  return this.currentMove.type === Move.types.PASS && this.currentMove.parent.type === Move.types.PASS;
 };
 
 
@@ -371,25 +362,6 @@ GameEngine.prototype.removeCurrentKo = function () {
   if (this.currentKo) {
     this.emit('intersection.cleared', { x: this.currentKo.x, y: this.currentKo.y });
     delete this.currentKo;
-  }
-};
-
-
-/*
- * Check whether move breaks out of current branch, forget it if that's the case
- * TODO: handle variations here
- */
-GameEngine.prototype.checkMoveForBranch = function(move) {
-  if (this.moves.length === this.currentMove) { return; }   // current move is at the head of the moves list so it's not breaking out of any the branch
-
-  if (typeof move.x === 'number' && typeof move.y === 'number') {
-    if (this.moves[this.currentMove].x !== move.x || this.moves[this.currentMove].y !== move.y) {
-      this.moves = this.moves.slice(0, this.currentMove);
-    }
-  } else {
-    if (this.moves[this.currentMove] !== move) {
-      this.moves = this.moves.slice(0, this.currentMove);
-    }
   }
 };
 
@@ -511,18 +483,22 @@ GameEngine.prototype.groupLiberties = function (group) {
  * For now variations are not possible. If a variation is played the game will forget about the previous branch (see play function).
  */
 GameEngine.prototype.backToMove = function (n) {
-  var i, j;
+  var self = this;
 
-  if (n > this.moves.length) { return; }
+  if (!this.allMoves[n]) { return; }
 
   this.emit('board.cleared');
   this.initialize();
-
   this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
-  for (var i = 0; i < n; i += 1) {
-    this.play(this.moves[i]);
+
+  var movesToReplay = [];
+  var m = this.allMoves[n];
+  while (m.parent) {
+    movesToReplay.unshift(m);
+    m = m.parent;
   }
 
+  movesToReplay.forEach(function (move) { self.play(move); });
 };
 
 GameEngine.prototype.back = function () {

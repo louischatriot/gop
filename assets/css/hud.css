@@ -31,3 +31,9 @@
   text-align: center;
   display: table;
 }
+
+.hud-stone-empty {
+  position: absolute;
+  background-image: url("../img/square.png");
+  background-size: cover;
+}
