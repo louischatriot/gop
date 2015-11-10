@@ -127,6 +127,7 @@ var maxDepth = 0;
 tree.traverse(function (move) { maxDepth = Math.max(maxDepth, move.depth); });
 
 // Assign to yPos the minimum possible y position (in stone + spacing length)
+// Keep in mind which nodes are on the same depth for "horizontalization" step
 var nexts = [];
 for (var i = 0; i <= maxDepth; i += 1) { nexts.push(0); }
 tree.traverse(function (move) {
@@ -134,11 +135,29 @@ tree.traverse(function (move) {
   nexts[move.depth] += 1;
 });
 
+// "Horizontalize" graph
+var depths = [];
+tree.traverse(function (move) {
+  if (!depths[move.depth]) { depths[move.depth] = []; }
+  depths[move.depth].push(move);
+});
+tree.traverse(function (move) {
+  if (!move.parent) { return; }
+
+  var delta = move.parent.yPos - move.yPos;
+  if (delta > 0) {
+    var begun = false;
+    depths[move.depth].forEach(function (m) {
+      if (m === move) { begun = true; }
+      if (begun) {
+        m.yPos += delta;
+      }
+    });
+  }
+});
+
 // Display stones and lines
 tree.traverse(function (move) {
-  // DEV
-  console.log(move.n + ' - ' + move.depth);
-
   // Stones
   var $dot = createHudDot('black', move.n);
   $dot.css('left', xPos(move) + 'px');

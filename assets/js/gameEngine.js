@@ -146,12 +146,7 @@ c15 = c12.addChild(15, Move.types.STONE, 15, 1);
 c16 = c12.addChild(16, Move.types.STONE, 16, 1);
 c17 = c16.addChild(17, Move.types.STONE, 17, 1);
 
-m.print();
-
-console.log('=================================================================');
-
 var copy = m.createCopy();
-copy.print();
 
 
 /**
