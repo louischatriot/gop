@@ -36,7 +36,7 @@ function Goban (_opts) {
   this.$container.append('<div class="shadow-stone-white"></div>');
   this.$container.append('<div class="shadow-stone-black"></div>');
   $(document).on('mousemove', function (e) { self.updateShadow(e.pageX - self.$container.offset().left, e.pageY - self.$container.offset().top); });
-  $(document).on('click', function (e) { console.log(e);self.handleClick(); });
+  $(document).on('click', function (e) { self.handleClick(); });
 
   // TODO: Don't fire event if double touch
   var te;
@@ -54,7 +54,6 @@ Goban.dots = { '9': [{ x: 2, y: 2 }, { x: 2, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 
              , '13': [{ x: 3, y: 3 }, { x: 3, y: 9 }, { x: 9, y: 3 }, { x: 9, y: 9 }, { x: 6, y: 6 }]
              , '19': [{ x: 3, y: 3 }, { x: 3, y: 9 }, { x: 3, y: 15 }, { x: 9, y: 3 }, { x: 9, y: 9 }, { x: 9, y: 15 }, { x: 15, y: 3 }, { x: 15, y: 9 }, { x: 15, y: 15 }]
              };
-
 
 Goban.prototype.drawBoard = function () {
   var $line
@@ -110,7 +109,7 @@ Goban.prototype.clearBoard = function () {
 
 
 Goban.prototype.userCanPlay = function () {
-  return this.gameEngine.currentPlayer === this.canPlayColor;
+  return (this.gameEngine.currentPlayer === this.canPlayColor) || (this.canPlayColor === 'both');
 };
 
 

@@ -1,0 +1,33 @@
+#moves {
+  border : 1px solid black;
+  overflow-x: scroll;
+  margin-top: 100px;
+}
+
+#moves .inner {
+  width: 1000px;
+  position: relative;
+}
+
+.hud-stone-black {
+  position: absolute;
+  border-radius: 50%;
+  background-color: black;
+  box-sizing: border-box;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  display: table;
+}
+
+.hud-stone-white {
+  position: absolute;
+  border-radius: 50%;
+  background-color: white;
+  border: 1px solid black;
+  box-sizing: border-box;
+  color: black;
+  font-weight: bold;
+  text-align: center;
+  display: table;
+}

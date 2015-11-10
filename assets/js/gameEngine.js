@@ -1,5 +1,161 @@
-/*
- * Public API
+/**
+ * Create new move
+ * n is the move number, a unique incremental id that is used to identify a specific move and enable incremental synchronization
+ * If type is not specified it is implied to be STONE
+ * x and y are needed online for type STONE
+ */
+function Move (n, type, x, y) {
+  this.n = n;
+  this.type = type || Move.types.STONE;
+  if (typeof x === 'number') { this.x = x; }
+  if (typeof y === 'number') { this.y = y; }
+  this.depth = 0;
+}
+
+Move.types = { STONE: 'stone', PASS: 'pass', RESIGN: 'resign' };
+
+
+/**
+ * Standard tree functions
+ */
+Move.prototype.isRoot = function () {
+  return this.parent === undefined;
+};
+
+Move.prototype.hasChildren = function () {
+  return this.children && this.children.length > 0;
+};
+
+Move.prototype.getDepth = function () {
+  return this.depth;   // Still unsure whether depth should be cached in nodes or not
+};
+
+/**
+ * @param{Boolean} strict Optional, defaults to false. If true test whether this is the same node
+ *                        If false only whether this is the same move regardless of place in the tree
+ */
+Move.prototype.isEqualTo = function (move, strict) {
+  if (strict && this.n !== move.n) { return false; }
+  if (this.type !== move.type) { return false; }
+  if (this.type === Move.types.STONE) {
+    return this.x === move.x && this.y === move.y;
+  } else {
+    return true;
+  }
+};
+
+
+/**
+ * Add a child to the move, returning the child
+ */
+Move.prototype.addChild = function (n, type, x, y) {
+  if (n.constructor && n.constructor.name === 'Move') { return this.addChild(n.n, n.type, n.x, n.y); }
+
+  if (!this.children) { this.children = []; }
+
+  var child;
+  this.children.forEach(function (c) { if (c.isEqualTo(new Move(0, type, x, y), false)) { child = c; } });
+
+  if (!child) {
+    child = new Move(n, type, x, y);
+    child.parent = this;
+    this.children.push(child);
+    child.depth = this.depth + 1;
+  }
+
+  return child;
+};
+
+
+Move.prototype.createCopy = function () {
+  var move = new Move(this.n, this.type, this.x, this.y);
+
+  if (this.children) {
+    move.children = [];
+    this.children.forEach(function (child) {
+      var copy = child.createCopy();
+      copy.parent = move;
+      copy.depth = child.depth;
+      move.children.push(copy);
+    });
+  }
+
+  return move;
+};
+
+
+/**
+ * Traverse the tree depth-first and apply fn to every node
+ */
+Move.prototype.traverse = function (fn) {
+  fn(this);
+  this.children && this.children.forEach(function (child) { child.traverse(fn); });
+};
+
+
+/**
+ * For development
+ */
+Move.prototype.print = function (indent) {
+  indent = indent || '';
+  var msg = indent + '* ' + this.n + ' - ' + this.type;
+  if (this.type === Move.types.STONE) {
+    msg += ' - ' + this.x + '-' + this.y;
+  }
+  console.log(msg);
+
+  if (this.children) {
+    this.children.forEach(function (c) { c.print(indent + '  '); });
+  }
+};
+
+
+
+//var m = new Move(0, Move.types.STONE, 4, 5);
+//var c;
+
+//c = m.addChild(1, Move.types.STONE, 3, 2);
+//c = c.addChild(2, Move.types.STONE, 3, 15);
+//c.addChild(3, Move.types.STONE, 4, 15);
+//var c2 = c.addChild(4, Move.types.STONE, 5, 15);
+//c.addChild(5, Move.types.STONE, 6, 15);
+
+//c2 = c2.addChild(6, Move.types.STONE, 3, 11);
+//c2 = c2.addChild(7, Move.types.STONE, 3, 12);
+
+
+
+var m = new Move(0, Move.types.STONE, 0, 0);
+var c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17;
+
+c1 = m.addChild(1, Move.types.STONE, 1, 1);
+c2 = c1.addChild(2, Move.types.STONE, 2, 1);
+c3 = c1.addChild(3, Move.types.STONE, 3, 1);
+c4 = c3.addChild(4, Move.types.STONE, 4, 1);
+c5 = c4.addChild(5, Move.types.STONE, 5, 1);
+c6 = c4.addChild(6, Move.types.STONE, 6, 1);
+c7 = c3.addChild(7, Move.types.STONE, 7, 1);
+c8 = c7.addChild(8, Move.types.STONE, 8, 1);
+c9 = c3.addChild(9, Move.types.STONE, 9, 1);
+c10 = m.addChild(10, Move.types.STONE, 10, 1);
+c11 = c10.addChild(11, Move.types.STONE, 11, 1);
+c12 = c10.addChild(12, Move.types.STONE, 12, 1);
+c13 = c12.addChild(13, Move.types.STONE, 13, 1);
+c14 = c13.addChild(14, Move.types.STONE, 14, 1);
+c15 = c12.addChild(15, Move.types.STONE, 15, 1);
+c16 = c12.addChild(16, Move.types.STONE, 16, 1);
+c17 = c16.addChild(17, Move.types.STONE, 17, 1);
+
+m.print();
+
+console.log('=================================================================');
+
+var copy = m.createCopy();
+copy.print();
+
+
+/**
+ * GameEngine Public API
  * * gameEngine.play(move) - have current player play move, which can be placing a stone {x, y}, passing or resigning
  * * gameEngine.playStone(x, y) - have current player play a stone at x, y
  * * gameEngine.pass() - have current player pass

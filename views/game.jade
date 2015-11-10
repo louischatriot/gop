@@ -3,7 +3,7 @@ extends layout-user
 block head
   title Play - #{game.name}
   link(href="/assets/css/goban.css", rel="stylesheet")
-
+  link(href="/assets/css/hud.css", rel="stylesheet")
 
 block content
   h4 #{game.name} - #{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size}
@@ -28,13 +28,16 @@ block content
       button.btn.pass Pass
       button.btn.resign Resign
 
+      div#moves
+        div.inner
 
     div#can-play(style="display: none;") #{canPlay}
     div#game-id(style="display: none;") #{game._id}
     div#size(style="display: none;") #{game.size}
-    div#moves(style="display: none;") #{moves}
+    div#movesKnownByServer(style="display: none;") #{moves}
 
 block append specificJs
+  script(type="text/javascript", src="/assets/js/jquery.line.js")
   script(type="text/javascript", src="/assets/js/goban.js")
   script(type="text/javascript", src="/assets/js/gameEngine.js")
   script(type="text/javascript", src="/assets/js/game.js")
