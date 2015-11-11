@@ -184,7 +184,7 @@ GameEngine.prototype.initialize = function (hard) {
     this.movesRoot = new Move(0, Move.types.EMPTY);
     this.allMoves = {};
     this.allMoves[0] = this.movesRoot;
-    this.maxMoveNumber = 0;   // Not necessarily sequential
+    this.maxMoveNumber = 0;
   }
   this.currentMove = this.movesRoot;   // Move 0 is empty board
 
