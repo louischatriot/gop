@@ -13,11 +13,11 @@ gameEngine.on('captured.change', function (m) { $(hudContainer + ' .captured-' +
 gameEngine.on('movePlayed', function (m) {
   // Move played
   var msg;
-  if (m.currentMove === 0) {
+  if (m.moveNumber === 0) {
     msg = "No move played yet";
-  } else if (m.move === GameEngine.moves.PASS) {
+  } else if (m.move.type === Move.types.PASS) {
     msg = "Move " + m.moveNumber + ' - ' + m.player + ' passed';
-  } else if (m.move === GameEngine.moves.RESIGN) {
+  } else if (m.move.type === Move.types.RESIGN) {
     msg = "Move " + m.moveNumber + ' - ' + m.player + ' resigned';
   } else {
     msg = 'Move ' + m.moveNumber + ' - ' + m.player + ' ' + m.move.x + '-' + m.move.y;
@@ -67,7 +67,7 @@ $(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
 
 // Activate/deactivate buttons depending on turn and game state
 function updateHUDButtonsState () {
-  if (gameEngine.currentPlayer === canPlayColor && !gameEngine.isGameFinished()) {
+  if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && !gameEngine.isGameFinished()) {
     $(hudContainer + ' .pass').prop('disabled', false);
     $(hudContainer + ' .resign').prop('disabled', false);
   } else {
@@ -149,7 +149,19 @@ function redrawGameTree() {
   // Display stones and lines
   tree.traverse(function (move) {
     // Stones
-    var $dot = $('<div data-n="' + move.n + '" class="hud-stone-' + move.player + '"><div style="display: table-cell; vertical-align: middle;">' + ((move.player === 'white' || move.player === 'black') ? move.depth : '') + '</div></div>');
+    var dotLabel = '';
+    switch (move.type) {
+      case Move.types.PASS:
+        dotLabel = 'P';
+        break;
+      case Move.types.RESIGN:
+        dotLabel = 'R';
+        break;
+      case Move.types.STONE:
+        dotLabel = move.depth;
+        break;
+    }
+    var $dot = $('<div data-n="' + move.n + '" class="hud-stone-' + move.player + '"><div style="display: table-cell; vertical-align: middle;">' + dotLabel + '</div></div>');
     $dot.width(dotSize);
     $dot.height(dotSize);
     $dot.css('left', xPos(move) + 'px');

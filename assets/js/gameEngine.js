@@ -47,6 +47,17 @@ Move.prototype.isEqualTo = function (move, strict) {
 };
 
 
+/*
+ * Returns move's child determined by the parameters, null if none found
+ */
+Move.prototype.child = function (type, player, x, y) {
+  var m = new Move(0, type, player, x, y);
+  var child = null;
+  this.children && this.children.forEach(function (c) { if (c.isEqualTo(m, false)) { child = c; } });
+  return child;
+};
+
+
 /**
  * Add a child to the move, returning the child
  */
@@ -148,7 +159,6 @@ function GameEngine (_opts) {
 }
 
 GameEngine.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
-GameEngine.moves = { PASS: 'pass', RESIGN: 'resign' };
 
 
 /*
@@ -255,11 +265,7 @@ GameEngine.prototype.playStone = function (x, y) {
 
   // Actually play the move
   this.board[x][y] = this.currentPlayer;
-  this.maxMoveNumber += 1;
-  this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.STONE, this.currentPlayer, x, y);
-  this.allMoves[this.maxMoveNumber] = this.currentMove;
-  this.currentPlayer = this.getOppositePlayer();
-  this.emit('movePlayed', { moveNumber: this.currentMove.depth, player: this.getOppositePlayer(), move: { x: x, y: y } });
+  this.updateGameTree(Move.types.STONE, x, y);
 
   // Handle Ko situations
   if (capturedStones.length === 1) {
@@ -276,18 +282,31 @@ GameEngine.prototype.playStone = function (x, y) {
 
 
 /*
+ * Update game tree and warn listeners that move was played
+ * Child is created only if it doesn't exist
+ * x and y are optional
+ */
+GameEngine.prototype.updateGameTree = function (type, x, y) {
+  var existingChild = this.currentMove.child(type, this.currentPlayer, x, y);
+  if (existingChild) {
+    this.currentMove = existingChild;
+  } else {
+    this.maxMoveNumber += 1;
+    this.currentMove = this.currentMove.addChild(this.maxMoveNumber, type, this.currentPlayer, x, y);
+    this.allMoves[this.maxMoveNumber] = this.currentMove;
+  }
+  this.currentPlayer = this.getOppositePlayer();
+  this.emit('movePlayed', { moveNumber: this.currentMove.depth, player: this.getOppositePlayer(), move: this.currentMove });
+};
+
+
+/*
  * Pass
  */
 GameEngine.prototype.pass = function () {
   if (this.isGameFinished()) { return; }
-
   this.removeCurrentKo();
-
-  this.maxMoveNumber += 1;
-  this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.PASS, this.currentPlayer);
-  this.allMoves[this.maxMoveNumber] = this.currentMove;
-  this.currentPlayer = this.getOppositePlayer();
-  this.emit('movePlayed', { moveNumber: this.maxMoveNumber, player: this.getOppositePlayer(), move: GameEngine.moves.PASS });
+  this.updateGameTree(Move.types.PASS);
 };
 
 
@@ -296,14 +315,8 @@ GameEngine.prototype.pass = function () {
  */
 GameEngine.prototype.resign = function () {
   if (this.isGameFinished()) { return; }
-
   this.removeCurrentKo();
-
-  this.maxMoveNumber += 1;
-  this.currentMove = this.currentMove.addChild(this.maxMoveNumber, Move.types.RESIGN, this.currentPlayer);
-  this.allMoves[this.maxMoveNumber] = this.currentMove;
-  this.currentPlayer = this.getOppositePlayer();   // Not really necessary but more consistent
-  this.emit('movePlayed', { moveNumber: this.maxMoveNumber, player: this.getOppositePlayer(), move: GameEngine.moves.RESIGN });
+  this.updateGameTree(Move.types.RESIGN);
 };
 
 
@@ -469,7 +482,7 @@ GameEngine.prototype.backToMove = function (n) {
 
   this.emit('board.cleared');
   this.initialize();
-  this.emit('movePlayed', { currentMove: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
+  this.emit('movePlayed', { moveNumber: 0, player: this.getOppositePlayer() });   // A bit dirty but it can be seen that way :)
 
   var movesToReplay = [];
   var m = this.allMoves[n];
