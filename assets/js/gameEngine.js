@@ -90,6 +90,17 @@ Move.prototype.addChild = function (n, type, player, x, y) {
 };
 
 
+/**
+ * Add child to a specific node in the tree
+ * Do nothing if parent cannot be found
+ */
+Move.prototype.addChildToMove = function (parentN, n, type, player, x, y) {
+  var parent;
+  this.traverse(function (move) { if (parentN === move.n) { parent = move; } });
+  if (parent) { parent.addChild(n, type, player, x, y); }
+};
+
+
 Move.prototype.createCopy = function () {
   var move = new Move(this.n, this.type, this.player, this.x, this.y);
 
@@ -547,7 +558,7 @@ GameEngine.prototype.backToMove = function (n) {
   var self = this;
 
   if (!this.allMoves[n]) { return; }
-  if (this.currentMove.n === n) { return; }
+  if (this.currentMove.n > 0 && this.currentMove.n === n) { return; }
 
   this.emit('board.cleared');
   this.initialize();
@@ -575,6 +586,11 @@ GameEngine.prototype.next = function () {
 /**
  * Replace entire game move tree from given move tree
  * Currently used to synchronize with server
+ * Will place focus on first move (empty board)
+ * WARNING: movesTree is not deep copied, needs to be done manually if side effects are to be avoided
+ *
+ * TODO: right now backToMove needs to be called after a call to this function
+ *       bundle functions or find a cleaner way
  */
 GameEngine.prototype.replaceGameTree = function (movesTree) {
   var self = this;

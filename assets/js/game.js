@@ -34,7 +34,7 @@ gameEngine.on('movePlayed', function (m) {
 
   // Warn server if the move originates from the goban
   if (m.move && (m.move.n > serverMoveTree.getMaxN())) {
-    serverMoveTree.addChild(m.move.getOwnData());
+    serverMoveTree.addChildToMove(m.move.parent.n, m.move.n, m.move.type, m.move.player, m.move.x, m.move.y);
     var data =  { move: m.move.getOwnData(), previousMoveN: m.move.parent.n };
     $.ajax({ type: 'POST', url: '/api/game/' + gameId
            , dataType: 'json', contentType:"application/json; charset=utf-8"
@@ -60,38 +60,68 @@ $(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
 //});
 
 
-// Server warns us of a played move by sending back the whole game moves state
-// TODO: keep cached copy of known or presumed server state
-socket.on('game.movePlayed', function (m) {
-  console.log('RECEIVED DATA');
-  console.log(m);
+/**
+ * Game state was updated on the server which sent the diff to the client
+ * If diff is not enough to reconstruct game state, client requests a full copy from the server
+ * @param {Number} currentMoveNumber Required, move on which the game is focused
+ * @param {Move} playedMove Optional, a new move that was just played
+ * @param {Number} parentMoveNumber Required if playedMove is set, move from which move was played
+ */
+socket.on('game.' + gameId + '.stateChanged', function (diff) {
+  console.log('RECEIVED NEW DIFF');
+  console.log(diff);
 
-  if (m.playedMove.n === gameEngine.movesRoot.getMaxN()) {
-    console.log('Client received the move he just played, do nothing');
-    return;
+  // Sync played move
+  if (diff.playedMove) {
+    if (diff.playedMove.n <= gameEngine.movesRoot.getMaxN()) {
+      console.log('Move already in client game tree');
+      return;
+    }
+
+    if (diff.playedMove.n > gameEngine.movesRoot.getMaxN() + 1) {
+      console.log('Client out of sync, resync');
+      return resyncWithServer();
+    }
+
+    // diff.playedMove.n = gameEngine.movesRoot.getMaxN() + 1
+    console.log('Client is missing one move, played by the opponent. Adding it to game tree.');
+    serverMoveTree.addChildToMove(diff.parentMoveNumber, diff.playedMove.n, diff.playedMove.type, diff.playedMove.player, diff.playedMove.x, diff.playedMove.y);
+    gameEngine.play(diff.playedMove);
   }
 
-  if (m.playedMove.n === gameEngine.movesRoot.getMaxN() + 1) {
-    console.log('Client received the next move, add it to the tree');
-    // Client is only missing this one move, update tree
-    gameEngine.play(m.playedMove);
+  // Sync focus
+  if (diff.currentMoveNumber > gameEngine.movesRoot.getMaxN()) {
+    console.log('Focus shifted to unknown move, resync');
+    return resyncWithServer();
   } else {
-    console.log('Client was out of sync, purging cache');
-    $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/game-state' }).complete(function (jqXHR) {
-      console.log(jqXHR);
-    });
+    console.log('Switching to move ' + diff.currentMoveNumber);
+    gameEngine.backToMove(diff.currentMoveNumber);
   }
-  //serverMoveTree = Move.deserialize(m.moves);
-  //gameEngine.replaceGameTree(serverMoveTree.createCopy());
-  //gameEngine.backToMove(gameEngine.movesRoot.getMaxN());
 });
 
 
-// TODO: handle current move change during reviews
+/**
+ * Resyncing with server, retrieving whole game tree and current move number
+ */
+function resyncWithServer () {
+  $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/game-state' }).complete(function (jqXHR) {
+    console.log('Receiving full state from server');
+    console.log(jqXHR);
+    serverMoveTree = Move.deserialize(jqXHR.responseJSON.moves);
+    gameEngine.replaceGameTree(serverMoveTree.createCopy());
+    var currentMoveNumber = jqXHR.responseJSON.currentMoveNumber;
+    if (currentMoveNumber.length === 0) { currentMoveNumber = 0; }
+    gameEngine.backToMove(currentMoveNumber);
+    updateHUDButtonsState();
+    redrawGameTree();
+  });
+}
 
 
 
-// Activate/deactivate buttons depending on turn and game state
+/**
+ * Such an evocative name
+ */
 function updateHUDButtonsState () {
   if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && !gameEngine.isGameFinished()) {
     $(hudContainer + ' .pass').prop('disabled', false);
@@ -197,6 +227,7 @@ function redrawGameTree() {
 // If the game was already under way on the server, replay it
 serverMoveTree = Move.deserialize($('#serverMoveTree').html());
 gameEngine.replaceGameTree(serverMoveTree.createCopy());
-gameEngine.backToMove(gameEngine.maxMoveNumber);
-updateHUDButtonsState();
+var currentMoveNumber = $('#currentMoveNumber').html();
+if (currentMoveNumber.length === 0) { currentMoveNumber = 0; }
+gameEngine.backToMove(currentMoveNumber);
 

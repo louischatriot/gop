@@ -35,6 +35,7 @@ block content
     div#game-id(style="display: none;") #{game._id}
     div#size(style="display: none;") #{game.size}
     div#serverMoveTree(style="display: none;") #{game.moves}
+    div#currentMoveNumber(style="display: none;") #{game.currentMoveNumber}
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/jquery.line.js")
