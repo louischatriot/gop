@@ -106,6 +106,57 @@ Move.prototype.traverse = function (fn) {
 };
 
 
+/*
+ * Data copy, serialization and deserialization
+ * May want a more terse representation
+ */
+Move.prototype.dataCopy = function () {
+  var copy = { type: this.type, n: this.n, player: this.player };
+  if (this.x) { copy.x = this.x; }
+  if (this.y) { copy.y = this.y; }
+  if (this.children) {
+    copy.children = [];
+    this.children.forEach(function (child) {
+      copy.children.push(child.dataCopy());
+    });
+  };
+  return copy;
+};
+
+Move.prototype.serialize = function () { return JSON.stringify(this.dataCopy()); };
+
+Move.fromDataCopy = function (dataCopy) {
+  var move = new Move(dataCopy.n, dataCopy.type, dataCopy.player);
+  if (dataCopy.x) { move.x = dataCopy.x; }
+  if (dataCopy.y) { move.y = dataCopy.y; }
+  if (dataCopy.children) {
+    move.children = [];
+    dataCopy.children.forEach(function (child) {
+      move.children.push(Move.fromDataCopy(child));
+    });
+  }
+  return move;
+};
+
+Move.deserialize = function (jsonRepresentation) {
+  if (!jsonRepresentation || jsonRepresentation.length === 0) {
+    return new Move(0, Move.types.EMPTY);
+  } else {
+    return Move.fromDataCopy(JSON.parse(jsonRepresentation));
+  }
+};
+
+
+/**
+ * Get maximum move number in this move tree
+ */
+Move.prototype.getMaxN = function () {
+  var maxN = 0;
+  this.traverse(function (move) { maxN = Math.max(maxN, move.n); });
+  return maxN;
+};
+
+
 /**
  * For development
  */
@@ -504,14 +555,19 @@ GameEngine.prototype.next = function () {
 
 
 /**
- * Refreshes entire game move tree (signel-branch one)
+ * Replace entire game move tree from given move tree
  * Currently used to synchronize with server
  */
-GameEngine.prototype.refreshGameMoves = function (moves) {
+GameEngine.prototype.replaceGameTree = function (movesTree) {
   var self = this;
-  this.moves = []
-  moves.forEach(function (move) { self.moves.push(move); });
-  this.backToMove(this.moves.length);
+  this.movesRoot = movesTree;
+  this.allMoves = {};
+  this.maxMoveNumber = 0;
+  this.movesRoot.traverse(function (move) {
+    self.allMoves[move.n] = move;
+    self.maxMoveNumber = Math.max(self.maxMoveNumber, move.n);
+  });
+  this.backToMove(this.maxMoveNumber);   // TODO: not necessarily the GameEngine's responsibility
 };
 
 

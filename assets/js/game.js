@@ -4,7 +4,7 @@ var gameId = $('#game-id').html();
 var size = parseInt($('#size').html(), 10);
 var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
-var movesKnownByServer = [];
+var serverMoveTree;
 
 gameEngine.on('intersection.cleared', function (i) { goban.clearIntersection(i.x, i.y); });
 gameEngine.on('board.cleared', function () { goban.clearBoard(); });
@@ -33,10 +33,15 @@ gameEngine.on('movePlayed', function (m) {
   }
 
   // Warn server if the move originates from the goban
-  // DEV
-  //if (m.moveNumber > movesKnownByServer.length) {
-    //$.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move } });
-  //}
+  console.log("==========================");
+  console.log(m.move);
+  console.log(m.move.parent);
+  console.log(serverMoveTree.getMaxN());
+  console.log(gameId);
+  if (m.move && (m.move.n > serverMoveTree.getMaxN())) {
+    $.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move } });
+    //$.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move, previousMoveN: m.move.parent.n } });
+  }
 
   updateHUDButtonsState();
   redrawGameTree();
@@ -58,10 +63,9 @@ $(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
 
 
 // Server warns us of a played move by sending back the whole game moves state (inefficient of course, to be improved if this is a bottleneck)
-// DEV
 //socket.on('game.movePlayed', function (m) {
-  //movesKnownByServer = m.moves
-  //gameEngine.refreshGameMoves(movesKnownByServer);
+  //serverMoveTree = Move.deserialize(m.moves);
+  //gameEngine.replaceGameTree(movesKnownByServer);
 //});
 
 
@@ -75,25 +79,6 @@ function updateHUDButtonsState () {
     $(hudContainer + ' .resign').prop('disabled', true);
   }
 }
-
-
-// Replay moves if game is not finished and is reloaded
-// DEV
-//movesKnownByServer = JSON.parse($('#movesKnownByServer').html());
-//movesKnownByServer.forEach(function (move) {
-  //gameEngine.play(move);
-//});
-//updateHUDButtonsState();
-
-
-
-
-
-
-
-
-
-
 
 
 /**
@@ -187,8 +172,9 @@ function redrawGameTree() {
 }
 
 
+// If the game was already under way on the server, replay it
+serverMoveTree = Move.deserialize($('#serverMoveTree').html());
+gameEngine.replaceGameTree(serverMoveTree.createCopy());
+updateHUDButtonsState();
 redrawGameTree();
-
-
-
 

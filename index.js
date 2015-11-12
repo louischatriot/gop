@@ -67,7 +67,8 @@ app.get('/assets/*', function (req, res) {
 // Last wall of defense against a bad crash
 process.on('uncaughtException', function (err) {
   console.log('Caught an uncaught exception, I should probably send an email or something');
-  console.log(err.stack);
+  console.log(err);
+  if (err.stack) { console.log(err.stack); }
 });
 
 
