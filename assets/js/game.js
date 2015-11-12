@@ -118,6 +118,17 @@ function resyncWithServer () {
 }
 
 
+/**
+ * Focus on another move, and warn server which then tells all watchers
+ */
+function focusOnMove (n) {
+  gameEngine.backToMove(n);
+  var data =  { currentMoveNumber: n };
+  $.ajax({ type: 'POST', url: '/api/game/' + gameId + '/focus'
+         , dataType: 'json', contentType:"application/json; charset=utf-8"
+         , data: JSON.stringify(data) });
+}
+
 
 /**
  * Such an evocative name
@@ -206,7 +217,7 @@ function redrawGameTree() {
     $dot.css('cursor', 'pointer');
     $dot.on('click', function (evt) {
       var n = $(evt.target).parent().data('n') || $(evt.target).data('n');   // So evil
-      gameEngine.backToMove(parseInt(n, 10));
+      focusOnMove(parseInt(n, 10));
     });
     $movesContainer.append($dot);
 

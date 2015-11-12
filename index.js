@@ -23,6 +23,7 @@ app.use(middlewares.session);
 api.use(middlewares.apiMustBeLoggedIn);
 api.post('/create-challenge', challenges.createChallenge);
 api.post('/game/:id', games.playApi);
+api.post('/game/:id/focus', games.changeFocusApi);
 api.get('/game/:id/game-state', games.getGameStateApi);
 
 
