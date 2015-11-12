@@ -31,6 +31,14 @@ Move.prototype.getDepth = function () {
   return this.depth;   // Still unsure whether depth should be cached in nodes or not
 };
 
+
+/**
+ * Get node data whithout children
+ */
+Move.prototype.getOwnData = function () {
+  return { n: this.n, type: this.type, player: this.player, x: this.x, y: this.y };
+};
+
 /**
  * @param{Boolean} strict Optional, defaults to false. If true test whether this is the same node
  *                        If false only whether this is the same move regardless of place in the tree
@@ -60,6 +68,8 @@ Move.prototype.child = function (type, player, x, y) {
 
 /**
  * Add a child to the move, returning the child
+ * IMPORTANT: this can only be used when constructing the tree from the "bottom up", move by move
+ *            depth is not propagated, and subtree link not done
  */
 Move.prototype.addChild = function (n, type, player, x, y) {
   if (n.constructor && n.constructor.name === 'Move') { return this.addChild(n.n, n.type, n.player, n.x, n.y); }
@@ -98,7 +108,7 @@ Move.prototype.createCopy = function () {
 
 
 /**
- * Traverse the tree depth-first and apply fn to every node
+ * Pre-order traverse the tree depth-first and apply fn to every node
  */
 Move.prototype.traverse = function (fn) {
   fn(this);
@@ -131,10 +141,13 @@ Move.fromDataCopy = function (dataCopy) {
   if (dataCopy.y) { move.y = dataCopy.y; }
   if (dataCopy.children) {
     move.children = [];
-    dataCopy.children.forEach(function (child) {
-      move.children.push(Move.fromDataCopy(child));
+    dataCopy.children.forEach(function (childDataCopy) {
+      var child = Move.fromDataCopy(childDataCopy);
+      child.parent = move;
+      move.children.push(child);
     });
   }
+
   return move;
 };
 
@@ -142,7 +155,9 @@ Move.deserialize = function (jsonRepresentation) {
   if (!jsonRepresentation || jsonRepresentation.length === 0) {
     return new Move(0, Move.types.EMPTY);
   } else {
-    return Move.fromDataCopy(JSON.parse(jsonRepresentation));
+    var tree = Move.fromDataCopy(JSON.parse(jsonRepresentation));
+    tree.traverse(function (move) { if (move.parent) { move.depth = move.parent.depth + 1; } });
+    return tree;
   }
 };
 
@@ -373,6 +388,7 @@ GameEngine.prototype.resign = function () {
 
 /**
  * Play a move, can be {x,y}, PASS or RESIGN
+ * Return the move that was just played
  */
 GameEngine.prototype.play = function (move) {
   switch (move.type) {
@@ -386,6 +402,7 @@ GameEngine.prototype.play = function (move) {
       this.playStone(move.x, move.y);
       break;
   }
+  return this.currentMove;
 };
 
 
@@ -530,6 +547,7 @@ GameEngine.prototype.backToMove = function (n) {
   var self = this;
 
   if (!this.allMoves[n]) { return; }
+  if (this.currentMove.n === n) { return; }
 
   this.emit('board.cleared');
   this.initialize();
@@ -567,10 +585,10 @@ GameEngine.prototype.replaceGameTree = function (movesTree) {
     self.allMoves[move.n] = move;
     self.maxMoveNumber = Math.max(self.maxMoveNumber, move.n);
   });
-  this.backToMove(this.maxMoveNumber);   // TODO: not necessarily the GameEngine's responsibility
 };
 
 
 
 // Code shared on the server.
+GameEngine.Move = Move;
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') { module.exports = GameEngine; }

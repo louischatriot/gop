@@ -34,7 +34,7 @@ block content
     div#can-play(style="display: none;") #{canPlay}
     div#game-id(style="display: none;") #{game._id}
     div#size(style="display: none;") #{game.size}
-    div#serverMoveTree(style="display: none;") #{moves}
+    div#serverMoveTree(style="display: none;") #{game.moves}
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/jquery.line.js")

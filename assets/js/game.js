@@ -33,14 +33,12 @@ gameEngine.on('movePlayed', function (m) {
   }
 
   // Warn server if the move originates from the goban
-  console.log("==========================");
-  console.log(m.move);
-  console.log(m.move.parent);
-  console.log(serverMoveTree.getMaxN());
-  console.log(gameId);
   if (m.move && (m.move.n > serverMoveTree.getMaxN())) {
-    $.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move } });
-    //$.ajax({ type: 'POST', url: '/api/game/' + gameId, dataType: 'json', data: { move: m.move, previousMoveN: m.move.parent.n } });
+    serverMoveTree.addChild(m.move.getOwnData());
+    var data =  { move: m.move.getOwnData(), previousMoveN: m.move.parent.n };
+    $.ajax({ type: 'POST', url: '/api/game/' + gameId
+           , dataType: 'json', contentType:"application/json; charset=utf-8"
+           , data: JSON.stringify(data) });
   }
 
   updateHUDButtonsState();
@@ -62,11 +60,35 @@ $(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
 //});
 
 
-// Server warns us of a played move by sending back the whole game moves state (inefficient of course, to be improved if this is a bottleneck)
-//socket.on('game.movePlayed', function (m) {
+// Server warns us of a played move by sending back the whole game moves state
+// TODO: keep cached copy of known or presumed server state
+socket.on('game.movePlayed', function (m) {
+  console.log('RECEIVED DATA');
+  console.log(m);
+
+  if (m.playedMove.n === gameEngine.movesRoot.getMaxN()) {
+    console.log('Client received the move he just played, do nothing');
+    return;
+  }
+
+  if (m.playedMove.n === gameEngine.movesRoot.getMaxN() + 1) {
+    console.log('Client received the next move, add it to the tree');
+    // Client is only missing this one move, update tree
+    gameEngine.play(m.playedMove);
+  } else {
+    console.log('Client was out of sync, purging cache');
+    $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/game-state' }).complete(function (jqXHR) {
+      console.log(jqXHR);
+    });
+  }
   //serverMoveTree = Move.deserialize(m.moves);
-  //gameEngine.replaceGameTree(movesKnownByServer);
-//});
+  //gameEngine.replaceGameTree(serverMoveTree.createCopy());
+  //gameEngine.backToMove(gameEngine.movesRoot.getMaxN());
+});
+
+
+// TODO: handle current move change during reviews
+
 
 
 // Activate/deactivate buttons depending on turn and game state
@@ -175,6 +197,6 @@ function redrawGameTree() {
 // If the game was already under way on the server, replay it
 serverMoveTree = Move.deserialize($('#serverMoveTree').html());
 gameEngine.replaceGameTree(serverMoveTree.createCopy());
+gameEngine.backToMove(gameEngine.maxMoveNumber);
 updateHUDButtonsState();
-redrawGameTree();
 
