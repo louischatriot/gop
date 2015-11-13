@@ -5,6 +5,7 @@ var size = parseInt($('#size').html(), 10);
 var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree;
+var updateDisplay = true;
 
 gameEngine.on('intersection.cleared', function (i) { goban.clearIntersection(i.x, i.y); });
 gameEngine.on('board.cleared', function () { goban.clearBoard(); });
@@ -41,8 +42,10 @@ gameEngine.on('movePlayed', function (m) {
            , data: JSON.stringify(data) });
   }
 
-  updateHUDButtonsState();
-  redrawGameTree();
+  if (updateDisplay) {
+    updateHUDButtonsState();
+    redrawGameTree();
+  }
 });
 
 gameEngine.on('ko.new', function (m) {
@@ -95,7 +98,7 @@ socket.on('game.' + gameId + '.stateChanged', function (diff) {
     return resyncWithServer();
   } else {
     console.log('Switching to move ' + diff.currentMoveNumber);
-    gameEngine.backToMove(diff.currentMoveNumber);
+    focusOnMove(diff.currentMoveNumber, false);
   }
 });
 
@@ -111,22 +114,28 @@ function resyncWithServer () {
     gameEngine.replaceGameTree(serverMoveTree.createCopy());
     var currentMoveNumber = jqXHR.responseJSON.currentMoveNumber;
     if (currentMoveNumber.length === 0) { currentMoveNumber = 0; }
-    gameEngine.backToMove(currentMoveNumber);
-    updateHUDButtonsState();
-    redrawGameTree();
+    focusOnMove(currentMoveNumber, false);
   });
 }
 
 
 /**
- * Focus on another move, and warn server which then tells all watchers
+ * Focus on another move. Disable automatic refreshing of tree while moves are replayed for speed.
+ * @param {Boolean} warnServer Optional, if true server is warned of the focus change to update all other clients
  */
-function focusOnMove (n) {
+function focusOnMove (n, warnServer) {
+  updateDisplay = false;
   gameEngine.backToMove(n);
-  var data =  { currentMoveNumber: n };
-  $.ajax({ type: 'POST', url: '/api/game/' + gameId + '/focus'
-         , dataType: 'json', contentType:"application/json; charset=utf-8"
-         , data: JSON.stringify(data) });
+  updateHUDButtonsState();
+  redrawGameTree();
+  updateDisplay = true;
+
+  if (warnServer) {
+    var data =  { currentMoveNumber: n };
+    $.ajax({ type: 'POST', url: '/api/game/' + gameId + '/focus'
+           , dataType: 'json', contentType:"application/json; charset=utf-8"
+           , data: JSON.stringify(data) });
+  }
 }
 
 
@@ -148,6 +157,8 @@ function updateHUDButtonsState () {
  * Such an evocative name
  */
 function redrawGameTree() {
+  console.log('Redrawing game tree');
+
   // Dev
   var dotSize = 30;   // In pixels
   var dotSpacing = 15;   // In pixels
@@ -217,7 +228,7 @@ function redrawGameTree() {
     $dot.css('cursor', 'pointer');
     $dot.on('click', function (evt) {
       var n = $(evt.target).parent().data('n') || $(evt.target).data('n');   // So evil
-      focusOnMove(parseInt(n, 10));
+      focusOnMove(parseInt(n, 10), true);
     });
     $movesContainer.append($dot);
 
@@ -240,5 +251,7 @@ serverMoveTree = Move.deserialize($('#serverMoveTree').html());
 gameEngine.replaceGameTree(serverMoveTree.createCopy());
 var currentMoveNumber = $('#currentMoveNumber').html();
 if (currentMoveNumber.length === 0) { currentMoveNumber = 0; }
-gameEngine.backToMove(currentMoveNumber);
+focusOnMove(currentMoveNumber, false);
+
+
 
