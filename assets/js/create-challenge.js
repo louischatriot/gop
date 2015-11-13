@@ -5,9 +5,9 @@ function createChallenge () {
   data.name = $('#input-name').val()
   data.size = parseInt($('#input-size option:selected').val(), 10)
 
-  if (data.name.length <= 4 || data.name.length > 25) {
+  if (data.name.length <= 1 || data.name.length > 25) {
     $('#input-name').parent().parent().addClass('error');
-    $('#input-name').parent().find('span.help-inline').html('Game name must be between 5 and 25 characters');
+    $('#input-name').parent().find('span.help-inline').html('Game name must be between 2 and 25 characters');
     return;
   } else {
     $('#input-name').parent().parent().removeClass('error');

@@ -1,3 +1,6 @@
+/**
+ * Play and review page
+ */
 var gobanContainer = "#the-goban", hudContainer = "#hud";
 var canPlayColor = 'both';   // DEV $('#can-play').html();
 var gameId = $('#game-id').html();
@@ -10,6 +13,9 @@ var updateDisplay = true;
 gameEngine.on('intersection.cleared', function (i) { goban.clearIntersection(i.x, i.y); });
 gameEngine.on('board.cleared', function () { goban.clearBoard(); });
 gameEngine.on('captured.change', function (m) { $(hudContainer + ' .captured-' + m.player).html(m.captured); });
+gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
+$(hudContainer + ' .pass').on('click', function () { gameEngine.pass(); });
+$(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
   // Move played
@@ -48,14 +54,9 @@ gameEngine.on('movePlayed', function (m) {
   }
 });
 
-gameEngine.on('ko.new', function (m) {
-  goban.drawStone('square', m.x, m.y);
-});
 
 //$(hudContainer + ' .back').on('click', function () { gameEngine.back(); });
 //$(hudContainer + ' .next').on('click', function () { gameEngine.next(); });
-$(hudContainer + ' .pass').on('click', function () { gameEngine.pass(); });
-$(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
 
 //$(document).on('keydown', function (evt) {
   //if (evt.keyCode === 37) { gameEngine.back(); }
@@ -143,12 +144,20 @@ function focusOnMove (n, warnServer) {
  * Such an evocative name
  */
 function updateHUDButtonsState () {
+  // Pass and resign
   if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && !gameEngine.isGameFinished()) {
     $(hudContainer + ' .pass').prop('disabled', false);
     $(hudContainer + ' .resign').prop('disabled', false);
   } else {
     $(hudContainer + ' .pass').prop('disabled', true);
     $(hudContainer + ' .resign').prop('disabled', true);
+  }
+
+  // Review
+  if (gameEngine.isGameFinished()) {
+    $(hudContainer + '  .create-review').css('display', 'block');
+  } else {
+    $(hudContainer + '  .create-review').css('display', 'none');
   }
 }
 
@@ -184,7 +193,7 @@ function redrawGameTree() {
     maxYPos = Math.max(maxYPos, move.yPos);
   });
 
-  // "Horizontalize" graph
+  // "Horizontalize" graph - step 1
   var depths = [];
   tree.traverse(function (move) {
     if (!depths[move.depth]) { depths[move.depth] = []; }
@@ -194,6 +203,27 @@ function redrawGameTree() {
     if (!move.parent) { return; }
 
     var delta = move.parent.yPos - move.yPos;
+    if (delta > 0) {
+      var begun = false;
+      depths[move.depth].forEach(function (m) {
+        if (m === move) { begun = true; }
+        if (begun) {
+          m.yPos += delta;
+        }
+      });
+    }
+  });
+
+  // "Horizontalize" graph - step 2
+  depths = [];
+  tree.traverse(function (move) {
+    if (!depths[move.depth]) { depths[move.depth] = []; }
+    depths[move.depth].push(move);
+  });
+  tree.postOrderTraverse(function (move) {
+    if (!move.children) { return; }
+
+    var delta = move.children[0].yPos - move.yPos;
     if (delta > 0) {
       var begun = false;
       depths[move.depth].forEach(function (m) {
@@ -220,6 +250,7 @@ function redrawGameTree() {
         dotLabel = move.depth;
         break;
     }
+    dotLabel = move.n;
     var $dot = $('<div data-n="' + move.n + '" class="hud-stone-' + move.player + '"><div style="display: table-cell; vertical-align: middle;">' + dotLabel + '</div></div>');
     $dot.width(dotSize);
     $dot.height(dotSize);

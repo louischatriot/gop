@@ -127,6 +127,15 @@ Move.prototype.traverse = function (fn) {
 };
 
 
+/**
+ * Post-order traverse the tree depth-first and apply fn to every node
+ */
+Move.prototype.postOrderTraverse = function (fn) {
+  this.children && this.children.forEach(function (child) { child.postOrderTraverse(fn); });
+  fn(this);
+};
+
+
 /*
  * Data copy, serialization and deserialization
  * May want a more terse representation
