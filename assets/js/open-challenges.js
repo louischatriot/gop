@@ -24,13 +24,7 @@ function updateList(data) {
   // Super convoluted, but only way to mimic mouse actions behavior
   $('tr').on('mousedown', function (evt) {
     var url = $(evt.currentTarget).attr('href');
-
-      //var evt = document.createEvent("MouseEvents");
-      //evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, true, false, false, false, 0, null);
-      //document.getElementById('ghost-link').dispatchEvent(evt);
-
-      //return;
-
+    if (!url) { return; }
 
     if (evt.which === 1) {
       if (ctrlDown) {

@@ -28,6 +28,10 @@ function createChallenge () {
 
 
 $(document).ready(function () {
+  $('#create-game-modal').on('shown', function () {
+    $('#input-name', this).focus();
+  });
+
   $('#create-game').on('click', function (evt) {
     evt.preventDefault();
     $('#create-game-modal').modal();

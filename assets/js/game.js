@@ -101,6 +101,7 @@ socket.on(socketEvent, function (diff) {
     // diff.playedMove.n = gameEngine.movesRoot.getMaxN() + 1
     console.log('Client is missing one move, played by the opponent. Adding it to game tree.');
     serverMoveTree.addChildToMove(diff.parentMoveNumber, diff.playedMove.n, diff.playedMove.type, diff.playedMove.player, diff.playedMove.x, diff.playedMove.y);
+    gameEngine.backToMove(diff.parentMoveNumber);
     gameEngine.play(diff.playedMove);
   }
 
