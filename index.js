@@ -22,9 +22,11 @@ app.use(middlewares.session);
 // API
 api.use(middlewares.apiMustBeLoggedIn);
 api.post('/create-challenge', challenges.createChallenge);
-api.post('/game/:id', games.playApi);
-api.post('/game/:id/focus', games.changeFocusApi);
-api.get('/game/:id/game-state', games.getGameStateApi);
+api.post('/game/:id', games.gamePlayApi);
+api.get('/game/:id/state', games.getGameStateApi);
+api.post('/review/:id', games.reviewPlayApi);
+api.post('/review/:id/focus', games.changeReviewFocusApi);
+api.get('/review/:id/state', games.getReviewStateApi);
 
 
 // Auth with Google
@@ -38,6 +40,8 @@ webapp.use(middlewares.mustBeLoggedIn);
 webapp.use(middlewares.addCommonLocals);
 webapp.get('/challenge/:id', challenges.openChallenge);
 webapp.get('/game/:id', games.game);
+webapp.get('/review/new', games.createReview);
+webapp.get('/review/:id', games.review);
 webapp.get('/open-challenges', challenges.openChallenges);
 webapp.get('/players', users.allPlayersPage);
 webapp.get('/games', games.games);

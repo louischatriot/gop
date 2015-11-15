@@ -2,20 +2,39 @@
  * Play and review page
  */
 var gobanContainer = "#the-goban", hudContainer = "#hud";
-var canPlayColor = 'both';   // DEV $('#can-play').html();
-var gameId = $('#game-id').html();
+var $gobanContainer = $(gobanContainer), $hudContainer = $(hudContainer)
+var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
+var gameId = $('#game-id').html();   // That's the review id in case this is a review page
 var size = parseInt($('#size').html(), 10);
+var reviewMode = $('#reviewMode').html() === 'true';
 var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
-var serverMoveTree;
+var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
 var updateDisplay = true;
 
+if (reviewMode) {
+  playApiUrl = '/api/review/' + gameId;
+  resyncApiUrl = '/api/review/' + gameId + '/state';
+  focusApiUrl = '/api/review/' + gameId + '/focus';
+  socketEvent = 'review.' + gameId + '.stateChanged';
+} else {
+  playApiUrl = '/api/game/' + gameId;
+  resyncApiUrl = '/api/game/' + gameId + '/state';
+  focusApiUrl = '/api/game/' + gameId + '/focus';
+  socketEvent = 'game.' + gameId + '.stateChanged';
+}
+
+
+
+/**
+ * Common behavior
+ */
 gameEngine.on('intersection.cleared', function (i) { goban.clearIntersection(i.x, i.y); });
 gameEngine.on('board.cleared', function () { goban.clearBoard(); });
-gameEngine.on('captured.change', function (m) { $(hudContainer + ' .captured-' + m.player).html(m.captured); });
+gameEngine.on('captured.change', function (m) { $hudContainer.find('.captured-' + m.player).html(m.captured); });
 gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
-$(hudContainer + ' .pass').on('click', function () { gameEngine.pass(); });
-$(hudContainer + ' .resign').on('click', function () { gameEngine.resign(); });
+$hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
+$hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
   // Move played
@@ -30,20 +49,20 @@ gameEngine.on('movePlayed', function (m) {
     msg = 'Move ' + m.moveNumber + ' - ' + m.player + ' ' + m.move.x + '-' + m.move.y;
     goban.drawStone(m.player, m.move.x, m.move.y);
   }
-  $(hudContainer + ' .move-number').html(msg);
+  $hudContainer.find('.move-number').html(msg);
 
   // Turn
   if (gameEngine.isGameFinished()) {
-    $(hudContainer + ' .turn').html('Game finished');
+    $hudContainer.find('.turn').html('Game finished');
   } else {
-    $(hudContainer + ' .turn').html('Turn: ' + gameEngine.getOppositePlayer(m.player));
+    $hudContainer.find('.turn').html('Turn: ' + gameEngine.getOppositePlayer(m.player));
   }
 
   // Warn server if the move originates from the goban
   if (m.move && (m.move.n > serverMoveTree.getMaxN())) {
     serverMoveTree.addChildToMove(m.move.parent.n, m.move.n, m.move.type, m.move.player, m.move.x, m.move.y);
     var data =  { move: m.move.getOwnData(), previousMoveN: m.move.parent.n };
-    $.ajax({ type: 'POST', url: '/api/game/' + gameId
+    $.ajax({ type: 'POST', url: playApiUrl
            , dataType: 'json', contentType:"application/json; charset=utf-8"
            , data: JSON.stringify(data) });
   }
@@ -55,15 +74,6 @@ gameEngine.on('movePlayed', function (m) {
 });
 
 
-//$(hudContainer + ' .back').on('click', function () { gameEngine.back(); });
-//$(hudContainer + ' .next').on('click', function () { gameEngine.next(); });
-
-//$(document).on('keydown', function (evt) {
-  //if (evt.keyCode === 37) { gameEngine.back(); }
-  //if (evt.keyCode === 39) { gameEngine.next(); }
-//});
-
-
 /**
  * Game state was updated on the server which sent the diff to the client
  * If diff is not enough to reconstruct game state, client requests a full copy from the server
@@ -71,7 +81,8 @@ gameEngine.on('movePlayed', function (m) {
  * @param {Move} playedMove Optional, a new move that was just played
  * @param {Number} parentMoveNumber Required if playedMove is set, move from which move was played
  */
-socket.on('game.' + gameId + '.stateChanged', function (diff) {
+socket.on(socketEvent, function (diff) {
+  // TODO: Place move on the right part of the tree (desync possible)
   console.log('RECEIVED NEW DIFF');
   console.log(diff);
 
@@ -108,7 +119,7 @@ socket.on('game.' + gameId + '.stateChanged', function (diff) {
  * Resyncing with server, retrieving whole game tree and current move number
  */
 function resyncWithServer () {
-  $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/game-state' }).complete(function (jqXHR) {
+  $.ajax({ type: 'GET', url: resyncApiUrl }).complete(function (jqXHR) {
     console.log('Receiving full state from server');
     console.log(jqXHR);
     serverMoveTree = Move.deserialize(jqXHR.responseJSON.moves);
@@ -131,9 +142,9 @@ function focusOnMove (n, warnServer) {
   redrawGameTree();
   updateDisplay = true;
 
-  if (warnServer) {
+  if (warnServer && reviewMode) {   // Clients only allowed to change focus if in review mode
     var data =  { currentMoveNumber: n };
-    $.ajax({ type: 'POST', url: '/api/game/' + gameId + '/focus'
+    $.ajax({ type: 'POST', url: focusApiUrl
            , dataType: 'json', contentType:"application/json; charset=utf-8"
            , data: JSON.stringify(data) });
   }
@@ -144,26 +155,28 @@ function focusOnMove (n, warnServer) {
  * Such an evocative name
  */
 function updateHUDButtonsState () {
-  // Pass and resign
+  // Pass and resign buttons
   if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && !gameEngine.isGameFinished()) {
-    $(hudContainer + ' .pass').prop('disabled', false);
-    $(hudContainer + ' .resign').prop('disabled', false);
+    $hudContainer.find('.pass').prop('disabled', false);
+    $hudContainer.find('.resign').prop('disabled', false);
   } else {
-    $(hudContainer + ' .pass').prop('disabled', true);
-    $(hudContainer + ' .resign').prop('disabled', true);
+    $hudContainer.find('.pass').prop('disabled', true);
+    $hudContainer.find('.resign').prop('disabled', true);
   }
 
-  // Review
-  if (gameEngine.isGameFinished()) {
-    $(hudContainer + '  .create-review').css('display', 'block');
-  } else {
-    $(hudContainer + '  .create-review').css('display', 'none');
+  // Display a 'review game' button when game is finished
+  if (!reviewMode) {
+    if (gameEngine.isGameFinished()) {
+      $hudContainer.find('.create-review').css('display', 'block');
+    } else {
+      $hudContainer.find('.create-review').css('display', 'none');
+    }
   }
 }
 
 
 /**
- * Such an evocative name
+ * Such an evocative name. Might want to put it in the review section only
  */
 function redrawGameTree() {
   console.log('Redrawing game tree');
@@ -250,14 +263,14 @@ function redrawGameTree() {
         dotLabel = move.depth;
         break;
     }
-    dotLabel = move.n;
     var $dot = $('<div data-n="' + move.n + '" class="hud-stone-' + move.player + '"><div style="display: table-cell; vertical-align: middle;">' + dotLabel + '</div></div>');
     $dot.width(dotSize);
     $dot.height(dotSize);
     $dot.css('left', xPos(move) + 'px');
     $dot.css('top', yPos(move) + 'px');
-    $dot.css('cursor', 'pointer');
+    $dot.css('cursor', 'pointer');   // TODO: Should handle cursor if you're not a reviewer
     $dot.on('click', function (evt) {
+      if (canPlayColor !== 'both') { return; }
       var n = $(evt.target).parent().data('n') || $(evt.target).data('n');   // So evil
       focusOnMove(parseInt(n, 10), true);
     });
@@ -276,13 +289,53 @@ function redrawGameTree() {
   $movesContainer.height(300);
 }
 
+/**
+ * END OF COMMON BEHAVIOR
+ */
 
-// If the game was already under way on the server, replay it
+
+/**
+ * Game-specific section
+ */
+if (!reviewMode) {
+  $hudContainer.find('.create-review').on('click', function () {
+    document.location = '/web/review/new?gameId=' + gameId;
+  });
+  // Add list of current reviews and automatic review loading for one player when opponent creates review
+}
+/**
+ * END OF GAME-SPECIFIC SECTION
+ */
+
+
+/**
+ * Review-specific section
+ */
+if (reviewMode) {
+  $hudContainer.find('.back').css('display', 'inline');
+  $hudContainer.find('.next').css('display', 'inline');
+  $hudContainer.find('#moves').css('display', 'block');
+
+  $hudContainer.find('.back').on('click', function () { gameEngine.back(); });
+  $hudContainer.find('.next').on('click', function () { gameEngine.next(); });
+
+  $(document).on('keydown', function (evt) {
+    if (evt.keyCode === 37) { gameEngine.back(); }
+    if (evt.keyCode === 39) { gameEngine.next(); }
+  });
+}
+/**
+ * END OF REVIEW SPECIFIC SECTION
+ */
+
+
+/**
+ * INITIALIZATION
+ */
 serverMoveTree = Move.deserialize($('#serverMoveTree').html());
 gameEngine.replaceGameTree(serverMoveTree.createCopy());
 var currentMoveNumber = $('#currentMoveNumber').html();
 if (currentMoveNumber.length === 0) { currentMoveNumber = 0; }
 focusOnMove(currentMoveNumber, false);
-
 
 
