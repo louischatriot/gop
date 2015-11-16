@@ -7,26 +7,35 @@ var listTemplate = ''
 $('body').append($ghostLink);
 
 listTemplate += '<div><b>Game being played</b></div>'
-listTemplate += '{{^currentGamesEmpty}}<table class="table table-hover"><thead><th>Players (black vs white)</th><th>Board size</th><th>Name</th></thead><tbody>{{/currentGamesEmpty}}'
-listTemplate += '{{^currentGamesEmpty}}{{#currentGames}} <tr href="/web/game/{{_id}}">'
+listTemplate += '{{#currentGames.length}}<table class="table table-hover"><thead><th>Players (black vs white)</th><th>Board size</th><th>Name</th></thead><tbody>{{/currentGames.length}}'
+listTemplate += '{{#currentGames.length}}{{#currentGames}} <tr href="/web/game/{{_id}}">'
   listTemplate += '<td>{{blackPlayerName}} vs {{whitePlayerName}}</td>'
   listTemplate += '<td>{{size}}x{{size}}</td>'
   listTemplate += '<td>{{name}}</td>'
-listTemplate += '{{/currentGames}}{{/currentGamesEmpty}}'
-listTemplate += '{{^currentGamesEmpty}}</tbody></table>{{/currentGamesEmpty}}'
-listTemplate += '{{#currentGamesEmpty}}No current game{{/currentGamesEmpty}}'
+listTemplate += '</tr>{{/currentGames}}{{/currentGames.length}}'
+listTemplate += '{{#currentGames.length}}</tbody></table>{{/currentGames.length}}'
+listTemplate += '{{^currentGames.length}}No current game<br><br>{{/currentGames.length}}'
 
-listTemplate += '<br><br>'
+listTemplate += '<div><b>Stale games</b> <i class="icon-question-sign" id="stale-explanation" style="cursor: pointer;"></i></div>'
+listTemplate += '{{#staleGames.length}}<table class="table table-hover"><thead><th>Players (black vs white)</th><th>Board size</th><th>Name</th></thead><tbody>{{/staleGames.length}}'
+listTemplate += '{{#staleGames.length}}{{#staleGames}} <tr href="/web/game/{{_id}}">'
+  listTemplate += '<td>{{blackPlayerName}} vs {{whitePlayerName}}</td>'
+  listTemplate += '<td>{{size}}x{{size}}</td>'
+  listTemplate += '<td>{{name}}</td>'
+listTemplate += '</tr>{{/staleGames}}{{/staleGames.length}}'
+listTemplate += '{{#staleGames.length}}</tbody></table>{{/staleGames.length}}'
+listTemplate += '{{^staleGames.length}}No stale game<br><br>{{/staleGames.length}}'
+
 
 listTemplate += '<div><b>Past games</b></div>'
-listTemplate += '{{^pastGamesEmpty}}<table class="table table-hover"><thead><th>Players (black vs white)</th><th>Board size</th><th>Name</th></thead><tbody>{{/pastGamesEmpty}}'
-listTemplate += '{{^pastGamesEmpty}}{{#pastGames}} <tr href="/web/game/{{_id}}">'
+listTemplate += '{{#pastGames.length}}<table class="table table-hover"><thead><th>Players (black vs white)</th><th>Board size</th><th>Name</th></thead><tbody>{{/pastGames.length}}'
+listTemplate += '{{#pastGames.length}}{{#pastGames}} <tr href="/web/game/{{_id}}">'
   listTemplate += '<td>{{blackPlayerName}} vs {{whitePlayerName}}</td>'
   listTemplate += '<td>{{size}}x{{size}}</td>'
   listTemplate += '<td>{{name}}</td>'
-listTemplate += '{{/pastGames}}{{/pastGamesEmpty}}'
-listTemplate += '{{^pastGamesEmpty}}</tbody></table>{{/pastGamesEmpty}}'
-listTemplate += '{{#pastGamesEmpty}}No past game{{/pastGamesEmpty}}'
+listTemplate += '</tr>{{/pastGames}}{{/pastGames.length}}'
+listTemplate += '{{#pastGames.length}}</tbody></table>{{/pastGames.length}}'
+listTemplate += '{{^pastGames.length}}No past game{{/pastGames.length}}'
 
 function updateList(data) {
   data.currentGamesEmpty = data.currentGames.length === 0;
@@ -38,6 +47,7 @@ function updateList(data) {
   // Super convoluted, but only way to mimic mouse actions behavior
   $('tr').on('mousedown', function (evt) {
     var url = $(evt.currentTarget).attr('href');
+    if (!url || url.length === 0) { return; }
     if (evt.which === 1) {
       if (ctrlDown) {
         openInNewTab(url);
@@ -68,6 +78,9 @@ function openInNewTab (url) {
 }
 
 
+$(document).ready(function () {
+  $('#stale-explanation').tooltip({ title: 'Stale games are unfinished games where both players have left. They are automatically finished as draw after 24 hours.' });
+});
 
 socket.on('games.change', updateList);
 updateList(initialData);

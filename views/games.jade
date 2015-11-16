@@ -6,15 +6,6 @@ block head
 block content
   h3 List of games
   div#list
-  div#listTemplate(style="display: none;")
-    |<b>Currently being played</b><ul>
-    |{{#currentGames}} <a href="/web/game/{{_id}}"><li>{{name}} - {{size}}x{{size}}</li></a> {{/currentGames}}
-    |{{^currentGames}} No current game {{/currentGames}}
-    |</ul>
-    |<b>Past games</b><ul>
-    |{{#pastGames}} <a href="/web/game/{{_id}}"><li>{{name}} - {{size}}x{{size}}</li></a> {{/pastGames}}
-    |{{^pastGames}} No current game {{/pastGames}}
-    |</ul>
   div#listInitialData(style="display: none;")
     =games
 
