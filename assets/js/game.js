@@ -169,8 +169,10 @@ function updateHUDButtonsState () {
   if (!reviewMode) {
     if (gameEngine.isGameFinished()) {
       $hudContainer.find('.create-review').css('display', 'block');
+      $hudContainer.find('.reviews').css('display', 'block');
     } else {
       $hudContainer.find('.create-review').css('display', 'none');
+      $hudContainer.find('.reviews').css('display', 'none');
     }
   }
 }
@@ -269,7 +271,7 @@ function redrawGameTree() {
     $dot.height(dotSize);
     $dot.css('left', xPos(move) + 'px');
     $dot.css('top', yPos(move) + 'px');
-    $dot.css('cursor', 'pointer');   // TODO: Should handle cursor if you're not a reviewer
+    if (canPlayColor === 'both') { $dot.css('cursor', 'pointer'); }
     $dot.on('click', function (evt) {
       if (canPlayColor !== 'both') { return; }
       var n = $(evt.target).parent().data('n') || $(evt.target).data('n');   // So evil
@@ -299,10 +301,27 @@ function redrawGameTree() {
  * Game-specific section
  */
 if (!reviewMode) {
+  var reviewsTemplate = '<br>';
+
+  reviewsTemplate += '{{^activeReviews.length}}<b>No active review</b><br>{{/activeReviews.length}}';
+  reviewsTemplate += '{{#activeReviews.length}}<b>Active reviews</b><ul>';
+  reviewsTemplate += '{{#activeReviews}}<li><a href="/web/review/{{_id}}">By {{reviewerName}}</a></li>{{/activeReviews}}';
+  reviewsTemplate += '</ul>{{/activeReviews.length}}';
+
+  reviewsTemplate += '{{^inactiveReviews.length}}<b>No past review</b>{{/inactiveReviews.length}}';
+  reviewsTemplate += '{{#inactiveReviews.length}}<b>Past reviews</b><ul>';
+  reviewsTemplate += '{{#inactiveReviews}}<li><a href="/web/review/{{_id}}">By {{reviewerName}}</a></li>{{/inactiveReviews}}';
+  reviewsTemplate += '</ul>{{/inactiveReviews.length}}';
+
   $hudContainer.find('.create-review').on('click', function () {
     document.location = '/web/review/new?gameId=' + gameId;
   });
-  // Add list of current reviews and automatic review loading for one player when opponent creates review
+
+  socket.on('game.' + gameId + '.reviewsChange', function (msg) {
+    $hudContainer.find('.reviews').css('display', 'block');
+    $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, msg));
+  });
+  $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, JSON.parse($('#initialReviews').html())));
 }
 /**
  * END OF GAME-SPECIFIC SECTION

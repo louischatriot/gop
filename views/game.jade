@@ -34,6 +34,7 @@ block content
       br
       br
       button.btn.create-review(style="display: none;") Review game
+      div.reviews(style="display: none;")
       div#moves(style="display:none;")
         div.inner
 
@@ -43,6 +44,7 @@ block content
     div#serverMoveTree(style="display: none;") #{game.moves}
     div#currentMoveNumber(style="display: none;") #{game.currentMoveNumber}
     div#reviewMode(style="display: none;") #{reviewMode}
+    div#initialReviews(style="display: none;") #{initialReviews}
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/jquery.line.js")
