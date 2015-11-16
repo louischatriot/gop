@@ -79,7 +79,7 @@ function openInNewTab (url) {
 
 
 $(document).ready(function () {
-  $('#stale-explanation').tooltip({ title: 'Stale games are unfinished games where both players have left. They are automatically finished as draw after 24 hours.' });
+  $('#stale-explanation').tooltip({ title: 'Stale games are unfinished games where both players have left. They are automatically finished as draw after 10 minutes.' });
 });
 
 socket.on('games.change', updateList);
