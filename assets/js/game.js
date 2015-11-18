@@ -11,6 +11,7 @@ var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
 var updateDisplay = true;
+var currentUndoRequest;
 
 if (reviewMode) {
   playApiUrl = '/api/review/' + gameId;
@@ -165,11 +166,17 @@ function updateHUDButtonsState () {
     $hudContainer.find('.resign').prop('disabled', true);
   }
 
-  // Undo button
+  // Undo
   if (gameEngine.currentMove.type === Move.types.RESIGN) {
     $hudContainer.find('.undo').prop('disabled', true);
   } else {
     $hudContainer.find('.undo').prop('disabled', false);
+  }
+  if (currentUndoRequest) {
+    if (currentUndoRequest.moveNumber + 1 < gameEngine.currentMove.n) {
+      currentUndoRequest = undefined;
+      $hudContainer.find('#undo-request').html('');
+    }
   }
 
   // Display a 'review game' button when game is finished
@@ -337,13 +344,28 @@ if (!reviewMode) {
   /**
    * Undo
    */
+  function requestUndo () { $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/undo' }); }
   $hudContainer.find('.undo').css('display', 'block');
-  $hudContainer.find('.undo').on('click', function () {
-    $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/undo' }).complete(function (jqXHR) {});
-    socket.on('game.' + gameId + '.undo', function (msg) {
-      gameEngine.undo(msg.undone);
-      serverMoveTree = gameEngine.movesRoot.createCopy();
-    });
+  $hudContainer.find('.undo').on('click', requestUndo);
+
+  socket.on('game.' + gameId + '.undo', function (msg) {
+    gameEngine.undo(msg.undone);
+    serverMoveTree = gameEngine.movesRoot.createCopy();
+    currentUndoRequest = undefined;
+    $hudContainer.find('#undo-request').html('');
+  });
+
+  socket.on('game.' + gameId + '.undoRequest', function (msg) {
+    var message = '<br>';
+    if (msg.requester === canPlayColor) {
+      message += 'You requested an undo'
+    } else {
+      message += 'An undo was requested <button class="btn accept-undo">Accept</button>';
+    }
+    $hudContainer.find('#undo-request').css('display', 'block');
+    $hudContainer.find('#undo-request').html(message);
+    $hudContainer.find('.accept-undo').on('click', requestUndo);
+    currentUndoRequest = msg;
   });
 }
 /**
