@@ -350,6 +350,9 @@ if (!reviewMode) {
 
   socket.on('game.' + gameId + '.undo', function (msg) {
     gameEngine.undo(msg.undone);
+    var currentN = gameEngine.currentMove.n;
+    gameEngine.currentMove = gameEngine.movesRoot;
+    focusOnMove(currentN);
     serverMoveTree = gameEngine.movesRoot.createCopy();
     currentUndoRequest = undefined;
     $hudContainer.find('#undo-request').html('');
@@ -360,11 +363,11 @@ if (!reviewMode) {
     if (msg.requester === canPlayColor) {
       message += 'You requested an undo'
     } else {
-      message += 'An undo was requested <button class="btn accept-undo">Accept</button>';
+      message += 'An undo was requested. <a href="#" class="accept-undo">Accept it</a>';
     }
     $hudContainer.find('#undo-request').css('display', 'block');
     $hudContainer.find('#undo-request').html(message);
-    $hudContainer.find('.accept-undo').on('click', requestUndo);
+    $hudContainer.find('.accept-undo').on('click', function (e) { e.preventDefault(); requestUndo(); });
     currentUndoRequest = msg;
   });
 }

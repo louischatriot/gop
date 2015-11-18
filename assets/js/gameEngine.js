@@ -615,8 +615,7 @@ GameEngine.prototype.undo = function (toUndoNumber) {
     delete this.allMoves[this.maxMoveNumber];
     this.maxMoveNumber -= 1;
   }
-  this.currentMove = this.movesRoot;
-  this.backToMove(targetMoveNumber);
+  this.currentMove = this.allMoves[targetMoveNumber];
 };
 
 
