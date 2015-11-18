@@ -24,6 +24,7 @@ api.use(middlewares.apiMustBeLoggedIn);
 api.post('/create-challenge', challenges.createChallenge);
 api.post('/game/:id', games.gamePlayApi);
 api.get('/game/:id/state', games.getGameStateApi);
+api.get('/game/:id/undo', games.askForUndo);
 api.post('/review/:id', games.reviewPlayApi);
 api.post('/review/:id/focus', games.changeReviewFocusApi);
 api.get('/review/:id/state', games.getReviewStateApi);

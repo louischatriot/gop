@@ -165,6 +165,13 @@ function updateHUDButtonsState () {
     $hudContainer.find('.resign').prop('disabled', true);
   }
 
+  // Undo button
+  if (gameEngine.currentMove.type === Move.types.RESIGN) {
+    $hudContainer.find('.undo').prop('disabled', true);
+  } else {
+    $hudContainer.find('.undo').prop('disabled', false);
+  }
+
   // Display a 'review game' button when game is finished
   if (!reviewMode) {
     if (gameEngine.isGameFinished()) {
@@ -301,6 +308,9 @@ function redrawGameTree() {
  * Game-specific section
  */
 if (!reviewMode) {
+  /**
+   * Reviews list
+   */
   var reviewsTemplate = '<br>';
 
   reviewsTemplate += '{{^activeReviews.length}}<b>No active review</b><br>{{/activeReviews.length}}';
@@ -322,6 +332,19 @@ if (!reviewMode) {
     $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, msg));
   });
   $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, JSON.parse($('#initialReviews').html())));
+
+
+  /**
+   * Undo
+   */
+  $hudContainer.find('.undo').css('display', 'block');
+  $hudContainer.find('.undo').on('click', function () {
+    $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/undo' }).complete(function (jqXHR) {});
+    socket.on('game.' + gameId + '.undo', function (msg) {
+      gameEngine.undo(msg.undone);
+      serverMoveTree = gameEngine.movesRoot.createCopy();
+    });
+  });
 }
 /**
  * END OF GAME-SPECIFIC SECTION

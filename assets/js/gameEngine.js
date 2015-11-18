@@ -31,6 +31,15 @@ Move.prototype.getDepth = function () {
   return this.depth;   // Still unsure whether depth should be cached in nodes or not
 };
 
+Move.prototype.removeChild = function (move) {
+  if (move.parent !== this) { return; }
+
+  move.parent = null;
+  var _children = [];
+  this.children.forEach(function (child) { if (child !== move) { _children.push(child); } });
+  this.children = _children.length > 0 ? _children : undefined;
+};
+
 
 /**
  * Get node data whithout children
@@ -584,11 +593,30 @@ GameEngine.prototype.backToMove = function (n) {
 };
 
 GameEngine.prototype.back = function () {
-  this.backToMove(this.currentMove - 1);
+  this.currentMove.parent && this.backToMove(this.currentMove.parent.n);
 };
 
 GameEngine.prototype.next = function () {
   this.backToMove(this.currentMove + 1);
+};
+
+
+/**
+ * Undo all moves for the branch starting at given move, move included
+ * Warning: this can only be called during a game, not a review, as it needs to remove only the last moves (in terms of n).
+ *          If not there will be a gap in n, resulting in synchronization issues
+ */
+GameEngine.prototype.undo = function (toUndoNumber) {
+  var toUndo = this.allMoves[toUndoNumber];
+  if (!toUndo.parent) { return; }
+  var targetMoveNumber = toUndo.parent.n;
+  toUndo.parent.removeChild(toUndo);
+  while (this.maxMoveNumber > targetMoveNumber) {
+    delete this.allMoves[this.maxMoveNumber];
+    this.maxMoveNumber -= 1;
+  }
+  this.currentMove = this.movesRoot;
+  this.backToMove(targetMoveNumber);
 };
 
 
