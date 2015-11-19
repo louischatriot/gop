@@ -40,12 +40,10 @@ $hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
 
 goban.on('intersection.clicked', function (msg) {
-  console.log('---------------');
-  console.log(msg);
   if (!countingPoints) {
     gameEngine.play({ type: Move.types.STONE, x: msg.x, y: msg.y });
   } else {
-    // Count point
+    // Count points
   }
 });
 
@@ -85,6 +83,7 @@ gameEngine.on('movePlayed', function (m) {
     redrawGameTree();
   }
 
+  // If double pass, start counting the points
   if (gameEngine.isCurrentBranchDoublePass()) {
     console.log("DBLE PASS");
     countingPoints = true;

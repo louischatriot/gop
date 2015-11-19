@@ -253,7 +253,7 @@ function GameEngine (_opts) {
   this.initialize(true);
 }
 
-GameEngine.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty' };
+GameEngine.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty', MARK: 'mark' };   // MARK is a special player used in the group detection algorithms
 
 
 /*
@@ -522,13 +522,21 @@ GameEngine.prototype.stonesCapturedByMove = function (x, y) {
 
 
 /*
- * Get the group (x, y) is part of, without duplicate.
+ * Get the group (x, y) is part of, without duplicate. A group can be a group of black stones, white stones, or empty intersections
  * Linear in the number of board intersactions.
  * Return an empty list if intersection is empty or out of bounds.
+ * @param {Board} _marks use an already existing marked copy of the board
  */
+GameEngine.prototype.getGroup = function (x, y, _marks) {
+  if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return []; }
+  var player = this.board[x][y];
+  var marks = _marks || this.cloneBoard();
+  return this.getGroupInternal(marks, player, x, y);
+};
+
 GameEngine.prototype.getGroupInternal = function (marks, player, x, y) {
   var group = [{ x: x, y: y }];
-  marks[x][y] = GameEngine.players.EMPTY;
+  marks[x][y] = GameEngine.players.MARK;
 
   var self = this;
   this.adjacentIntersections(x, y).forEach(function (i) {
@@ -540,30 +548,23 @@ GameEngine.prototype.getGroupInternal = function (marks, player, x, y) {
   return group;
 };
 
-GameEngine.prototype.getGroup = function (x, y) {
-  if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return []; }
-  var player = this.board[x][y];
-  if (player === GameEngine.players.EMPTY) { return []; }
-
-  var marks = this.cloneBoard();
-  return this.getGroupInternal(marks, player, x, y);
-};
-
 
 /*
  * Given a group as a list of intersections, return the list of liberties
+ * @param {Player} _libertyType Optional, defaults to EMPTY, what's considered a liberty
  */
-GameEngine.prototype.groupLiberties = function (group) {
+GameEngine.prototype.groupLiberties = function (group, _libertyType) {
   var marks = this.cloneBoard()
     , liberties = []
+    , libertyType = _libertyType || GameEngine.players.EMPTY
     , self = this
     ;
 
   group.forEach(function(stone) {
     self.adjacentIntersections(stone).forEach(function (i) {
-      if (marks[i.x][i.y] === GameEngine.players.EMPTY) {
+      if (marks[i.x][i.y] === libertyType) {
         liberties.push({ x: i.x, y: i.y });
-        marks[i.x][i.y] = GameEngine.players.BLACK;
+        marks[i.x][i.y] = GameEngine.players.MARK;
       }
     });
   });
@@ -641,6 +642,45 @@ GameEngine.prototype.replaceGameTree = function (movesTree) {
     self.maxMoveNumber = Math.max(self.maxMoveNumber, move.n);
   });
 };
+
+
+/**
+ * Get list of connex territories
+ */
+GameEngine.prototype.getTerritories = function () {
+  var marks = this.cloneBoard();
+  var fl, g, b, w, owner, territories = [];
+
+  while (fl = this.getFirstNonMarkedEmpty(marks)) {
+    g = this.getGroup(fl.x, fl.y, marks);
+    b = this.groupLiberties(g, GameEngine.players.BLACK);
+    w = this.groupLiberties(g, GameEngine.players.WHITE);
+
+    owner = 'dame';
+    if (b.length > 0 && w.length === 0) { owner = GameEngine.players.BLACK; }
+    if (w.length > 0 && b.length === 0) { owner = GameEngine.players.WHITE; }
+
+    territories.push({ empties: g, owner: owner });
+  }
+
+  return territories;
+};
+
+GameEngine.prototype.getFirstNonMarkedEmpty = function (marks) {
+  for (var i = 0; i < this.size; i += 1) {
+    for (var j = 0; j < this.size; j += 1) {
+      if (this.board[i][j] === GameEngine.players.EMPTY && marks[i][j] !== GameEngine.players.MARK) {
+        return { x: i, y: j };
+      }
+    }
+  }
+  return null;
+};
+
+GameEngine.prototype.getTerritoryColor = function () {
+
+};
+
 
 
 
