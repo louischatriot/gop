@@ -3,11 +3,11 @@
  */
 var gobanContainer = "#the-goban", hudContainer = "#hud";
 var $gobanContainer = $(gobanContainer), $hudContainer = $(hudContainer)
-var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
 var gameId = $('#game-id').html();   // That's the review id in case this is a review page
 var size = parseInt($('#size').html(), 10);
 var reviewMode = $('#review-mode').html() === 'true';
 var gameStatus = $('#game-status').html();
+var canPlayColor = gameStatus === 'ongoing' ? $('#can-play').html() : 'none';   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
 var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
@@ -159,7 +159,7 @@ function focusOnMove (n, warnServer) {
  */
 function updateHUDButtonsState () {
   // Pass and resign buttons
-  if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && gameEngine.canPlayInCurrentBranch()) {
+  if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && gameEngine.canPlayInCurrentBranch() && gameStatus === 'ongoing') {
     $hudContainer.find('.pass').prop('disabled', false);
     $hudContainer.find('.resign').prop('disabled', false);
   } else {
@@ -168,7 +168,7 @@ function updateHUDButtonsState () {
   }
 
   // Undo
-  if (gameEngine.currentMove.type === Move.types.RESIGN) {
+  if (gameEngine.currentMove.type === Move.types.RESIGN || gameStatus !== 'ongoing') {
     $hudContainer.find('.undo').prop('disabled', true);
   } else {
     $hudContainer.find('.undo').prop('disabled', false);
@@ -182,7 +182,7 @@ function updateHUDButtonsState () {
 
   // Display a 'review game' button when game is finished
   if (!reviewMode) {
-    if (gameEngine.canPlayInCurrentBranch()) {
+    if (gameEngine.canPlayInCurrentBranch() && gameStatus === 'ongoing') {
       $hudContainer.find('.create-review').css('display', 'none');
       $hudContainer.find('.reviews').css('display', 'none');
     } else {
