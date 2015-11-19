@@ -151,8 +151,8 @@ Move.prototype.postOrderTraverse = function (fn) {
  */
 Move.prototype.dataCopy = function () {
   var copy = { type: this.type, n: this.n, player: this.player };
-  if (this.x) { copy.x = this.x; }
-  if (this.y) { copy.y = this.y; }
+  if (this.x !== undefined) { copy.x = this.x; }
+  if (this.y !== undefined) { copy.y = this.y; }
   if (this.children) {
     copy.children = [];
     this.children.forEach(function (child) {
@@ -166,8 +166,8 @@ Move.prototype.serialize = function () { return JSON.stringify(this.dataCopy());
 
 Move.fromDataCopy = function (dataCopy) {
   var move = new Move(dataCopy.n, dataCopy.type, dataCopy.player);
-  if (dataCopy.x) { move.x = dataCopy.x; }
-  if (dataCopy.y) { move.y = dataCopy.y; }
+  if (dataCopy.x !== undefined) { move.x = dataCopy.x; }
+  if (dataCopy.y !== undefined) { move.y = dataCopy.y; }
   if (dataCopy.children) {
     move.children = [];
     dataCopy.children.forEach(function (childDataCopy) {
@@ -439,9 +439,12 @@ GameEngine.prototype.play = function (move) {
  * Tells whether game is finished at the current move (double pass or resign)
  */
 GameEngine.prototype.canPlayInCurrentBranch = function () {
-  if (this.currentMove.type === Move.types.RESIGN) { return false; }
-  if (!this.currentMove.parent) { return true; }
-  return !(this.currentMove.type === Move.types.PASS && this.currentMove.parent.type === Move.types.PASS);
+  return !(this.currentMove.type === Move.types.RESIGN || this.isCurrentBranchDoublePass());
+};
+
+GameEngine.prototype.isCurrentBranchDoublePass = function () {
+  if (!this.currentMove.parent) { return false; }
+  return this.currentMove.type === Move.types.PASS && this.currentMove.parent.type === Move.types.PASS;
 };
 
 

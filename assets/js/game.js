@@ -12,6 +12,7 @@ var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
 var updateDisplay = true;
+var countingPoints = false;
 var currentUndoRequest;
 
 if (reviewMode) {
@@ -37,6 +38,16 @@ gameEngine.on('captured.change', function (m) { $hudContainer.find('.captured-' 
 gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
 $hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
+
+goban.on('intersection.clicked', function (msg) {
+  console.log('---------------');
+  console.log(msg);
+  if (!countingPoints) {
+    gameEngine.play({ type: Move.types.STONE, x: msg.x, y: msg.y });
+  } else {
+    // Count point
+  }
+});
 
 gameEngine.on('movePlayed', function (m) {
   // Move played
@@ -72,6 +83,11 @@ gameEngine.on('movePlayed', function (m) {
   if (updateDisplay) {
     updateHUDButtonsState();
     redrawGameTree();
+  }
+
+  if (gameEngine.isCurrentBranchDoublePass()) {
+    console.log("DBLE PASS");
+    countingPoints = true;
   }
 });
 

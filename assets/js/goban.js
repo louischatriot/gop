@@ -47,8 +47,21 @@ function Goban (_opts) {
     self.handleSwipe(touch.pageX - self.$container.offset().left, touch.pageY - self.$container.offset().top);
   });
 
+  this.listeners = {};
+
   this.drawBoard();
 }
+
+Goban.prototype.on = function(evt, listener) {
+  if (!this.listeners[evt]) { this.listeners[evt] = []; }
+  this.listeners[evt].push(listener);
+};
+
+Goban.prototype.emit = function (evt, message) {
+  if (this.listeners[evt]) {
+    this.listeners[evt].forEach(function (fn) { fn(message); });
+  }
+};
 
 Goban.dots = { '9': [{ x: 2, y: 2 }, { x: 2, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 6 }, { x: 4, y: 4 }]
              , '13': [{ x: 3, y: 3 }, { x: 3, y: 9 }, { x: 9, y: 3 }, { x: 9, y: 9 }, { x: 6, y: 6 }]
@@ -144,7 +157,7 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 
 Goban.prototype.handleClick = function () {
   if (this.currentX !== undefined && this.currentY !== undefined && this.gameEngine.canPlayInCurrentBranch() && this.userCanPlay()) {
-    this.gameEngine.play({ type: Move.types.STONE, x: this.currentX, y: this.currentY});
+    goban.emit('intersection.clicked', { x: this.currentX, y: this.currentY });
     return;
   }
 };
@@ -153,7 +166,7 @@ Goban.prototype.handleSwipe = function (x_px, y_px) {
   if (!this.gameEngine.canPlayInCurrentBranch() || !this.userCanPlay()) { return; }
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
   var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
-  this.gameEngine.play({ type: Move.types.STONE, x: x, y: y });
+  goban.emit('intersection.clicked', { x: x, y: y });
 };
 
 
