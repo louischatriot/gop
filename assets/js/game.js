@@ -7,12 +7,12 @@ var gameId = $('#game-id').html();   // That's the review id in case this is a r
 var size = parseInt($('#size').html(), 10);
 var reviewMode = $('#review-mode').html() === 'true';
 var gameStatus = $('#game-status').html();
-var canPlayColor = gameStatus === 'ongoing' ? $('#can-play').html() : 'none';   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
+var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
 var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
 var updateDisplay = true;
-var countingPoints = false;
+var countingPointsMode = false;
 var currentUndoRequest;
 
 if (reviewMode) {
@@ -25,6 +25,7 @@ if (reviewMode) {
   resyncApiUrl = '/api/game/' + gameId + '/state';
   focusApiUrl = '/api/game/' + gameId + '/focus';
   socketEvent = 'game.' + gameId + '.stateChanged';
+  if (gameStatus !== 'ongoing') { canPlayColor = 'none'; }   // TODO: cleaner handling of canPlayColor
 }
 
 
@@ -40,7 +41,7 @@ $hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
 
 goban.on('intersection.clicked', function (msg) {
-  if (!countingPoints) {
+  if (!countingPointsMode) {
     gameEngine.play({ type: Move.types.STONE, x: msg.x, y: msg.y });
   } else {
     // Count points
@@ -78,17 +79,28 @@ gameEngine.on('movePlayed', function (m) {
            , data: JSON.stringify(data) });
   }
 
+  // If double pass, start counting the points
+  if (gameEngine.isCurrentBranchDoublePass()) {
+    console.log("DBLE PASS");
+    countingPointsMode = true;
+    updatePointsCount();
+  }
+
   if (updateDisplay) {
     updateHUDButtonsState();
     redrawGameTree();
   }
-
-  // If double pass, start counting the points
-  if (gameEngine.isCurrentBranchDoublePass()) {
-    console.log("DBLE PASS");
-    countingPoints = true;
-  }
 });
+
+
+function updatePointsCount () {
+  gameEngine.getTerritories().forEach(function (territory) {
+    if (territory.owner === 'dame') { return; }
+    territory.empties.forEach(function (i) { goban.drawPoint(territory.owner, i.x, i.y); });
+  });
+
+  $hudContainer.find("#points").html('COUNTING POINTS');
+}
 
 
 /**
@@ -193,6 +205,15 @@ function updateHUDButtonsState () {
       currentUndoRequest = undefined;
       $hudContainer.find('#undo-request').html('');
     }
+  } else {
+    $hudContainer.find('#undo-request').html('');
+  }
+
+  // Points counting
+  if (countingPointsMode) {
+    $hudContainer.find('#points').css('display', 'block');
+  } else {
+    $hudContainer.find('#points').css('display', 'none');
   }
 
   // Display a 'review game' button when game is finished
@@ -303,6 +324,8 @@ function redrawGameTree() {
     $dot.css('top', yPos(move) + 'px');
     if (canPlayColor === 'both') { $dot.css('cursor', 'pointer'); }
     $dot.on('click', function (evt) {
+      console.log('------------------------');
+      console.log(canPlayColor);
       if (canPlayColor !== 'both') { return; }
       var n = $(evt.target).parent().data('n') || $(evt.target).data('n');   // So evil
       focusOnMove(parseInt(n, 10), true);
@@ -371,7 +394,8 @@ if (!reviewMode) {
     focusOnMove(currentN);
     serverMoveTree = gameEngine.movesRoot.createCopy();
     currentUndoRequest = undefined;
-    $hudContainer.find('#undo-request').html('');
+    countingPointsMode = false;
+    updateHUDButtonsState();
   });
 
   socket.on('game.' + gameId + '.undoRequest', function (msg) {

@@ -25,8 +25,9 @@ function Goban (_opts) {
   this.stoneSizePercent = 100 / (this.size - 1);
   this.$outerContainer.css('padding', (50 / this.size) + '%');
 
+  this.countingPointsMode = false;
+
   // Dynamically ensure the goban is always square if width was specified as a percentage
-  // TODO: use margin to ensure outside stones also fit
   this.$container.height(this.$container.width());
   $(window).on('resize', function () {
     self.$container.height(self.$container.width());
@@ -36,7 +37,7 @@ function Goban (_opts) {
   this.$container.append('<div class="shadow-stone-white"></div>');
   this.$container.append('<div class="shadow-stone-black"></div>');
   $(document).on('mousemove', function (e) { self.updateShadow(e.pageX - self.$container.offset().left, e.pageY - self.$container.offset().top); });
-  $(document).on('click', function (e) { self.handleClick(); });
+  $(document).on('click', function (e) { self.handleClick(e); });
 
   // TODO: Don't fire event if double touch
   var te;
@@ -109,6 +110,16 @@ Goban.prototype.drawStone = function (color, x, y) {
 };
 
 
+Goban.prototype.drawPoint = function (color, x, y) {
+  var $stone = $('<div class="goban-stone-' + color + '" data-intersection="' + x + '-' + y + '"></div>');
+  $stone.css('width', (this.stoneSizePercent / 3) + '%');
+  $stone.css('height', (this.stoneSizePercent / 3) + '%');
+  $stone.css('left', ((x - 0.5 + (1/3)) * this.stoneSizePercent) + '%');
+  $stone.css('top', ((y - 0.5 + (1/3)) * this.stoneSizePercent) + '%');
+  this.$container.append($stone);
+};
+
+
 Goban.prototype.clearIntersection = function (x, y) {
   this.$container.find('div[data-intersection="' + x + '-' + y + '"]').remove();
 };
@@ -155,10 +166,23 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
   this.currentY = y;
 };
 
-Goban.prototype.handleClick = function () {
-  if (this.currentX !== undefined && this.currentY !== undefined && this.gameEngine.canPlayInCurrentBranch() && this.userCanPlay()) {
-    goban.emit('intersection.clicked', { x: this.currentX, y: this.currentY });
-    return;
+Goban.prototype.handleClick = function (e) {
+  var x_px = e.pageX - this.$container.offset().left;
+  var y_px = e.pageY - this.$container.offset().top;
+  var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
+  var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
+  if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return; }
+
+  console.log('------------------------');
+  console.log(x);
+  console.log(y);
+
+  if (countingPointsMode) {
+    console.log('MARK DEAD');
+  } else {
+    if (this.gameEngine.canPlayInCurrentBranch() && this.userCanPlay()) {
+      goban.emit('intersection.clicked', { x: x, y: y });
+    }
   }
 };
 
