@@ -45,10 +45,11 @@ block content
     div#can-play(style="display: none;") #{canPlay}
     div#game-id(style="display: none;") #{game._id}
     div#size(style="display: none;") #{game.size}
-    div#serverMoveTree(style="display: none;") #{game.moves}
-    div#currentMoveNumber(style="display: none;") #{game.currentMoveNumber}
-    div#reviewMode(style="display: none;") #{reviewMode}
-    div#initialReviews(style="display: none;") #{initialReviews}
+    div#server-move-tree(style="display: none;") #{game.moves}
+    div#current-move-number(style="display: none;") #{game.currentMoveNumber}
+    div#game-status(style="display: none;") #{game.status}
+    div#review-mode(style="display: none;") #{reviewMode}
+    div#initial-reviews(style="display: none;") #{initialReviews}
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/jquery.line.js")

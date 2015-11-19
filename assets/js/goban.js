@@ -114,7 +114,7 @@ Goban.prototype.userCanPlay = function () {
 
 
 Goban.prototype.updateShadow = function (x_px, y_px) {
-  if (this.gameEngine.isGameFinished() || !this.userCanPlay()) {
+  if (!this.gameEngine.canPlayInCurrentBranch() || !this.userCanPlay()) {
     this.$container.find('.shadow-stone-white').css('display', 'none');
     this.$container.find('.shadow-stone-black').css('display', 'none');
     return;
@@ -143,14 +143,14 @@ Goban.prototype.updateShadow = function (x_px, y_px) {
 };
 
 Goban.prototype.handleClick = function () {
-  if (this.currentX !== undefined && this.currentY !== undefined && !this.gameEngine.isGameFinished() && this.userCanPlay()) {
+  if (this.currentX !== undefined && this.currentY !== undefined && this.gameEngine.canPlayInCurrentBranch() && this.userCanPlay()) {
     this.gameEngine.play({ type: Move.types.STONE, x: this.currentX, y: this.currentY});
     return;
   }
 };
 
 Goban.prototype.handleSwipe = function (x_px, y_px) {
-  if (this.gameEngine.isGameFinished() || !this.userCanPlay()) { return; }
+  if (!this.gameEngine.canPlayInCurrentBranch() || !this.userCanPlay()) { return; }
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
   var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
   this.gameEngine.play({ type: Move.types.STONE, x: x, y: y });

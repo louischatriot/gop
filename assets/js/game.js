@@ -6,7 +6,8 @@ var $gobanContainer = $(gobanContainer), $hudContainer = $(hudContainer)
 var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
 var gameId = $('#game-id').html();   // That's the review id in case this is a review page
 var size = parseInt($('#size').html(), 10);
-var reviewMode = $('#reviewMode').html() === 'true';
+var reviewMode = $('#review-mode').html() === 'true';
+var gameStatus = $('#game-status').html();
 var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
@@ -53,7 +54,7 @@ gameEngine.on('movePlayed', function (m) {
   $hudContainer.find('.move-number').html(msg);
 
   // Turn
-  if (gameEngine.isGameFinished()) {
+  if (!gameEngine.canPlayInCurrentBranch()) {
     $hudContainer.find('.turn').html('Game finished');
   } else {
     $hudContainer.find('.turn').html('Turn: ' + gameEngine.getOppositePlayer(m.player));
@@ -158,7 +159,7 @@ function focusOnMove (n, warnServer) {
  */
 function updateHUDButtonsState () {
   // Pass and resign buttons
-  if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && !gameEngine.isGameFinished()) {
+  if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && gameEngine.canPlayInCurrentBranch()) {
     $hudContainer.find('.pass').prop('disabled', false);
     $hudContainer.find('.resign').prop('disabled', false);
   } else {
@@ -181,12 +182,12 @@ function updateHUDButtonsState () {
 
   // Display a 'review game' button when game is finished
   if (!reviewMode) {
-    if (gameEngine.isGameFinished()) {
-      $hudContainer.find('.create-review').css('display', 'block');
-      $hudContainer.find('.reviews').css('display', 'block');
-    } else {
+    if (gameEngine.canPlayInCurrentBranch()) {
       $hudContainer.find('.create-review').css('display', 'none');
       $hudContainer.find('.reviews').css('display', 'none');
+    } else {
+      $hudContainer.find('.create-review').css('display', 'block');
+      $hudContainer.find('.reviews').css('display', 'block');
     }
   }
 }
@@ -338,7 +339,7 @@ if (!reviewMode) {
     $hudContainer.find('.reviews').css('display', 'block');
     $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, msg));
   });
-  $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, JSON.parse($('#initialReviews').html())));
+  $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, JSON.parse($('#initial-reviews').html())));
 
 
   /**
@@ -400,9 +401,9 @@ if (reviewMode) {
 /**
  * INITIALIZATION
  */
-serverMoveTree = Move.deserialize($('#serverMoveTree').html());
+serverMoveTree = Move.deserialize($('#server-move-tree').html());
 gameEngine.replaceGameTree(serverMoveTree.createCopy());
-var currentMoveNumber = $('#currentMoveNumber').html();
+var currentMoveNumber = $('#current-move-number').html();
 if (currentMoveNumber.length === 0) { currentMoveNumber = 0; }
 focusOnMove(currentMoveNumber, false);
 

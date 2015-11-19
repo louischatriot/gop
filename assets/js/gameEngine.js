@@ -225,7 +225,7 @@ Move.prototype.print = function (indent) {
  * * gameEngine.pass() - have current player pass
  * * gameEngine.resign() - have the current player resign
  * * gameEngine.isMoveValid(x, y) - can the current player play a stone at x, y
- * * gameEngine.isGameFinished() - is the game finished in the current branch
+ * * gameEngine.canPlayInCurrentBranch()
  * * gameEngine.currentPlayer
  * * gameEngine.getOppositePlayer(player[optional]) - if player specified, get his opponent, otherwise get the current player's opponent
  *
@@ -345,7 +345,7 @@ GameEngine.prototype.playStone = function (x, y) {
 
   if (typeof x !== 'number' && y === undefined) { y = x.y; x = x.x; }   // playStone({x,y} signature was used
 
-  if (this.isGameFinished()) { return; }
+  if (!this.canPlayInCurrentBranch()) { return; }
   if (!this.isMoveValid(x, y)) { return; }
 
   this.removeCurrentKo();
@@ -399,7 +399,7 @@ GameEngine.prototype.updateGameTree = function (type, x, y) {
  * Pass
  */
 GameEngine.prototype.pass = function () {
-  if (this.isGameFinished()) { return; }
+  if (!this.canPlayInCurrentBranch()) { return; }
   this.removeCurrentKo();
   this.updateGameTree(Move.types.PASS);
 };
@@ -409,7 +409,7 @@ GameEngine.prototype.pass = function () {
  * Resign
  */
 GameEngine.prototype.resign = function () {
-  if (this.isGameFinished()) { return; }
+  if (!this.canPlayInCurrentBranch()) { return; }
   this.removeCurrentKo();
   this.updateGameTree(Move.types.RESIGN);
 };
@@ -438,10 +438,10 @@ GameEngine.prototype.play = function (move) {
 /*
  * Tells whether game is finished at the current move (double pass or resign)
  */
-GameEngine.prototype.isGameFinished = function () {
-  if (this.currentMove.type === Move.types.RESIGN) { return true; }
-  if (!this.currentMove.parent) { return false; }
-  return this.currentMove.type === Move.types.PASS && this.currentMove.parent.type === Move.types.PASS;
+GameEngine.prototype.canPlayInCurrentBranch = function () {
+  if (this.currentMove.type === Move.types.RESIGN) { return false; }
+  if (!this.currentMove.parent) { return true; }
+  return !(this.currentMove.type === Move.types.PASS && this.currentMove.parent.type === Move.types.PASS);
 };
 
 
