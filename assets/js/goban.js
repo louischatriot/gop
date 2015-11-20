@@ -98,12 +98,16 @@ Goban.prototype.drawBoard = function () {
 };
 
 
-Goban.prototype.drawStone = function (color, x, y) {
+Goban.prototype.drawStone = function (color, x, y, highlight) {
   var $stone = $('<div class="goban-stone-' + color + '" data-intersection="' + x + '-' + y + '"></div>');
   $stone.css('width', this.stoneSizePercent + '%');
   $stone.css('height', this.stoneSizePercent + '%');
   $stone.css('left', ((x - 0.5) * this.stoneSizePercent) + '%');
   $stone.css('top', ((y - 0.5) * this.stoneSizePercent) + '%');
+  if (highlight) {
+    this.$container.find('.goban-latest-stone').removeClass('goban-latest-stone');   // Only one stone highlighted at once
+    $stone.addClass('goban-latest-stone');
+  }
   this.$container.append($stone);
 };
 

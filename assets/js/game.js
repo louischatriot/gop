@@ -13,6 +13,7 @@ var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameE
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, stateChangedEvent;
 var updateDisplay = true;
 var countingPointsMode = false, markedAsDead = $('#marked-dead').html(), shiftDown = false, blackScore, whiteScore;
+var clickSound = new Audio('/assets/sounds/click.mp3');
 var currentUndoRequest;
 
 if (markedAsDead.length === 0) {
@@ -51,7 +52,8 @@ $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
   if (m.move && m.move.type === Move.types.STONE) {
-    goban.drawStone(m.player, m.move.x, m.move.y);
+    goban.drawStone(m.player, m.move.x, m.move.y, true);
+    clickSound.play();
   }
 
   // Warn server if the move originates from the goban

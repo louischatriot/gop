@@ -41,6 +41,11 @@
   background-size: cover;
 }
 
+.goban-latest-stone {
+  border-radius: 50%;
+  border: solid 1px red;
+}
+
 .goban-stone-square {
   position: absolute;
   background-image: url("../img/square.png");
