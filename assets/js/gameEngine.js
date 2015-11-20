@@ -240,8 +240,10 @@ Move.prototype.print = function (indent) {
  *                        { x, y }
  *
  * * board.cleared - The board was cleared
+ *
+ * * intersection.point - An intersection was marked as a point for owner
+ *                        { owner, x, y }
  */
-
 
 function GameEngine (_opts) {
   var opts = _opts || {};
@@ -682,8 +684,36 @@ GameEngine.prototype.getFirstNonMarkedEmpty = function (marks) {
   return null;
 };
 
-GameEngine.prototype.getTerritoryColor = function () {
 
+/**
+ * Get scores for both players, given a list of dead stones
+ * Also emits events to warn listeners which intersections are points
+ */
+GameEngine.prototype.getScores = function (_markedAsDead) {
+  var markedAsDead = _markedAsDead || []
+    , countingBoard = this.cloneBoard()
+    , blackScore = this.captured[GameEngine.players.BLACK]
+    , whiteScore = this.captured[GameEngine.players.WHITE]
+    , self = this
+    ;
+
+  markedAsDead.forEach(function (i) {
+    if (self.board[i.x][i.y]  === GameEngine.players.BLACK) { whiteScore += 1; }
+    if (self.board[i.x][i.y]  === GameEngine.players.WHITE) { blackScore += 1; }
+    countingBoard[i.x][i.y] = GameEngine.players.EMPTY;
+  });
+
+  this.getTerritories(countingBoard).forEach(function (territory) {
+    if (territory.owner === 'dame') { return; }
+    territory.empties.forEach(function (i) { self.emit('intersection.point', { owner: territory.owner, x: i.x, y: i.y }); });
+    if (territory.owner === GameEngine.players.BLACK) {
+      blackScore += territory.empties.length;
+    } else {
+      whiteScore += territory.empties.length;
+    }
+  });
+
+  return { blackScore: blackScore, whiteScore: whiteScore };
 };
 
 

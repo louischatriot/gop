@@ -45,6 +45,7 @@ gameEngine.on('intersection.cleared', function (i) { goban.clearIntersection(i.x
 gameEngine.on('board.cleared', function () { goban.clearBoard(); });
 gameEngine.on('captured.change', function (m) { $hudContainer.find('.captured-' + m.player).html(m.captured); });
 gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
+gameEngine.on('intersection.point', function (m) { goban.drawPoint(m.owner, m.x, m.y); });
 $hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
 
@@ -137,29 +138,12 @@ socket.on('game.' + gameId + '.bothOk', function () {
  * Update scores and markings on the board while counting points
  */
 function updatePointsCount () {
-  var countingBoard = gameEngine.cloneBoard();
-
-  blackScore = gameEngine.captured[GameEngine.players.BLACK]
-  whiteScore = gameEngine.captured[GameEngine.players.WHITE]
-
-  markedAsDead.forEach(function (i) {
-    if (gameEngine.board[i.x][i.y]  === GameEngine.players.BLACK) { whiteScore += 1; }
-    if (gameEngine.board[i.x][i.y]  === GameEngine.players.WHITE) { blackScore += 1; }
-    countingBoard[i.x][i.y] = GameEngine.players.EMPTY;
-  });
-
   goban.removePointsMarking();
   goban.markDead(markedAsDead);
 
-  gameEngine.getTerritories(countingBoard).forEach(function (territory) {
-    if (territory.owner === 'dame') { return; }
-    territory.empties.forEach(function (i) { goban.drawPoint(territory.owner, i.x, i.y); });
-    if (territory.owner === GameEngine.players.BLACK) {
-      blackScore += territory.empties.length;
-    } else {
-      whiteScore += territory.empties.length;
-    }
-  });
+  var scores = gameEngine.getScores(markedAsDead);
+  blackScore = scores.blackScore;
+  whiteScore = scores.whiteScore;
 
   updateHUDstate();
 }
