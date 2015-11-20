@@ -246,7 +246,7 @@ function updateHUDstate () {
 
   // Turn
   if (!gameEngine.canPlayInCurrentBranch()) {
-    $hudContainer.find('.turn').html('Game finished');
+    $hudContainer.find('.turn').html('Game finished' + (countingPointsMode ? ' - scoring' : ''));
   } else {
     $hudContainer.find('.turn').html('Turn: ' + gameEngine.getOppositePlayer(gameEngine.currentMove.player));
   }
