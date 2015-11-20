@@ -298,12 +298,16 @@ GameEngine.prototype.emit = function (evt, message) {
 };
 
 
-GameEngine.prototype.cloneBoard = function () {
+/**
+ * Clone the supplied _board, defaulting to current board
+ */
+GameEngine.prototype.cloneBoard = function (_board) {
+  var board = _board || this.board;
   var res = [];
   for (var i = 0; i < this.size; i += 1) {
     res[i] = [];
     for (var j = 0; j < this.size; j += 1) {
-      res[i][j] = this.board[i][j];
+      res[i][j] = board[i][j];
     }
   }
   return res;
@@ -525,7 +529,7 @@ GameEngine.prototype.stonesCapturedByMove = function (x, y) {
  * Get the group (x, y) is part of, without duplicate. A group can be a group of black stones, white stones, or empty intersections
  * Linear in the number of board intersactions.
  * Return an empty list if intersection is empty or out of bounds.
- * @param {Board} _marks use an already existing marked copy of the board
+ * @param {Board} _marks use an already existing marked copy of the board and further mark it
  */
 GameEngine.prototype.getGroup = function (x, y, _marks) {
   if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return []; }
@@ -552,9 +556,10 @@ GameEngine.prototype.getGroupInternal = function (marks, player, x, y) {
 /*
  * Given a group as a list of intersections, return the list of liberties
  * @param {Player} _libertyType Optional, defaults to EMPTY, what's considered a liberty
+ * @param {Board} _marks Optional, can override curren board without changing it
  */
-GameEngine.prototype.groupLiberties = function (group, _libertyType) {
-  var marks = this.cloneBoard()
+GameEngine.prototype.groupLiberties = function (group, _libertyType, _marks) {
+  var marks = _marks || this.cloneBoard()
     , liberties = []
     , libertyType = _libertyType || GameEngine.players.EMPTY
     , self = this
@@ -646,15 +651,16 @@ GameEngine.prototype.replaceGameTree = function (movesTree) {
 
 /**
  * Get list of connex territories
+ * @param{Board} _marks Optional, if supplied used instead of the actual board
  */
-GameEngine.prototype.getTerritories = function () {
-  var marks = this.cloneBoard();
+GameEngine.prototype.getTerritories = function (_marks) {
+  var marks = _marks || this.cloneBoard();
   var fl, g, b, w, owner, territories = [];
 
   while (fl = this.getFirstNonMarkedEmpty(marks)) {
     g = this.getGroup(fl.x, fl.y, marks);
-    b = this.groupLiberties(g, GameEngine.players.BLACK);
-    w = this.groupLiberties(g, GameEngine.players.WHITE);
+    b = this.groupLiberties(g, GameEngine.players.BLACK, this.cloneBoard(marks));
+    w = this.groupLiberties(g, GameEngine.players.WHITE, this.cloneBoard(marks));
 
     owner = 'dame';
     if (b.length > 0 && w.length === 0) { owner = GameEngine.players.BLACK; }
@@ -681,6 +687,31 @@ GameEngine.prototype.getTerritoryColor = function () {
 
 };
 
+
+/**
+ * Print a board in the console, useful for development
+ */
+GameEngine.printBoard = function (board) {
+  var line;
+  for (var j = 0; j < size; j += 1) {
+    line = '';
+    for (var i = 0; i < size; i += 1) {
+      switch (board[i][j]) {
+        case GameEngine.players.EMPTY:
+          line += '.   ';
+          break;
+        case GameEngine.players.BLACK:
+          line += 'b   ';
+          break;
+        case GameEngine.players.WHITE:
+          line += 'w   ';
+          break;
+      }
+    }
+    console.log(line);
+    console.log('');
+  }
+};
 
 
 

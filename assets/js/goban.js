@@ -25,8 +25,6 @@ function Goban (_opts) {
   this.stoneSizePercent = 100 / (this.size - 1);
   this.$outerContainer.css('padding', (50 / this.size) + '%');
 
-  this.countingPointsMode = false;
-
   // Dynamically ensure the goban is always square if width was specified as a percentage
   this.$container.height(this.$container.width());
   $(window).on('resize', function () {
@@ -111,7 +109,7 @@ Goban.prototype.drawStone = function (color, x, y) {
 
 
 Goban.prototype.drawPoint = function (color, x, y) {
-  var $stone = $('<div class="goban-stone-' + color + '" data-intersection="' + x + '-' + y + '"></div>');
+  var $stone = $('<div class="point goban-stone-' + color + '" data-intersection="' + x + '-' + y + '"></div>');
   $stone.css('width', (this.stoneSizePercent / 3) + '%');
   $stone.css('height', (this.stoneSizePercent / 3) + '%');
   $stone.css('left', ((x - 0.5 + (1/3)) * this.stoneSizePercent) + '%');
@@ -122,6 +120,23 @@ Goban.prototype.drawPoint = function (color, x, y) {
 
 Goban.prototype.clearIntersection = function (x, y) {
   this.$container.find('div[data-intersection="' + x + '-' + y + '"]').remove();
+};
+
+
+// Remove points and dead marks on stones
+Goban.prototype.removePointsMarking = function () {
+  this.$container.find('div.point').remove();
+  this.$container.find('div.goban-stone-white').removeClass('dead');
+  this.$container.find('div.goban-stone-black').removeClass('dead');
+};
+
+
+Goban.prototype.markDead = function (intersection) {
+  if (intersection.x !== undefined && intersection.y !== undefined) {
+    this.$container.find('div[data-intersection="' + intersection.x + '-' + intersection.y + '"]').addClass('dead');
+  } else {
+    for (var i = 0; i < intersection.length; i += 1) { this.markDead(intersection[i]); }
+  }
 };
 
 
@@ -172,24 +187,13 @@ Goban.prototype.handleClick = function (e) {
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
   var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
   if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return; }
-
-  console.log('------------------------');
-  console.log(x);
-  console.log(y);
-
-  if (countingPointsMode) {
-    console.log('MARK DEAD');
-  } else {
-    if (this.gameEngine.canPlayInCurrentBranch() && this.userCanPlay()) {
-      goban.emit('intersection.clicked', { x: x, y: y });
-    }
-  }
+  goban.emit('intersection.clicked', { x: x, y: y });
 };
 
 Goban.prototype.handleSwipe = function (x_px, y_px) {
-  if (!this.gameEngine.canPlayInCurrentBranch() || !this.userCanPlay()) { return; }
   var x = Math.floor((this.size - 1) * x_px / this.$container.width() + 0.5)
   var y = Math.floor((this.size - 1) * y_px / this.$container.height() + 0.5)
+  if (x < 0 || y < 0 || x >= this.size || y >= this.size) { return; }
   goban.emit('intersection.clicked', { x: x, y: y });
 };
 

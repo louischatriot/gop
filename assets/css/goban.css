@@ -63,3 +63,6 @@
   opacity: 0.65;
 }
 
+.dead {
+  opacity: 0.5;
+}

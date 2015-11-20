@@ -12,7 +12,7 @@ var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
 var updateDisplay = true;
-var countingPointsMode = false;
+var countingPointsMode = false, markedAsDead = [], shiftDown = false;
 var currentUndoRequest;
 
 if (reviewMode) {
@@ -28,6 +28,8 @@ if (reviewMode) {
   if (gameStatus !== 'ongoing') { canPlayColor = 'none'; }   // TODO: cleaner handling of canPlayColor
 }
 
+$(document).on('keydown', function (e) { if (e.keyCode === 16) { shiftDown = true; } });
+$(document).on('keyup', function (e) { if (e.keyCode === 16) { shiftDown = false; } });
 
 
 /**
@@ -44,7 +46,22 @@ goban.on('intersection.clicked', function (msg) {
   if (!countingPointsMode) {
     gameEngine.play({ type: Move.types.STONE, x: msg.x, y: msg.y });
   } else {
-    // Count points
+    // Update list of dead stones
+    if (gameEngine.board[msg.x][msg.y] === GameEngine.players.EMPTY) { return; }
+    var g = gameEngine.getGroup(msg.x, msg.y);
+
+    // markedAsDead contains only unique values. Linear dedup.
+    var _markedAsDead = {};
+    markedAsDead.forEach(function (i) { _markedAsDead[i.x + '-' + i.y] = true; });
+    g.forEach(function (i) { _markedAsDead[i.x + '-' + i.y] = !shiftDown; });
+    markedAsDead = [];
+    Object.keys(_markedAsDead).forEach(function (k) {
+      if (_markedAsDead[k]) {
+        markedAsDead.push({ x: parseInt(k.split('-')[0], 10), y: parseInt(k.split('-')[1], 10) });
+      }
+    });
+
+    updatePointsCount();
   }
 });
 
@@ -93,13 +110,39 @@ gameEngine.on('movePlayed', function (m) {
 });
 
 
+/**
+ * Update board and HUD status
+ */
 function updatePointsCount () {
-  gameEngine.getTerritories().forEach(function (territory) {
-    if (territory.owner === 'dame') { return; }
-    territory.empties.forEach(function (i) { goban.drawPoint(territory.owner, i.x, i.y); });
+  var blackScore = gameEngine.captured[GameEngine.players.BLACK]
+    , whiteScore = gameEngine.captured[GameEngine.players.WHITE]
+    , countingBoard = gameEngine.cloneBoard()
+    ;
+
+  markedAsDead.forEach(function (i) {
+    if (gameEngine.board[i.x][i.y]  === GameEngine.players.BLACK) { whiteScore += 1; }
+    if (gameEngine.board[i.x][i.y]  === GameEngine.players.WHITE) { blackScore += 1; }
+    countingBoard[i.x][i.y] = GameEngine.players.EMPTY;
   });
 
-  $hudContainer.find("#points").html('COUNTING POINTS');
+  goban.removePointsMarking();
+  goban.markDead(markedAsDead);
+
+  gameEngine.getTerritories(countingBoard).forEach(function (territory) {
+    if (territory.owner === 'dame') { return; }
+    territory.empties.forEach(function (i) { goban.drawPoint(territory.owner, i.x, i.y); });
+    if (territory.owner === GameEngine.players.BLACK) {
+      blackScore += territory.empties.length;
+    } else {
+      whiteScore += territory.empties.length;
+    }
+  });
+
+  var msg = "<b>Scores:</b><ul>";
+  msg += "<li>Black: " + blackScore + "</li>";
+  msg += "<li>White: " + whiteScore + "</li>";
+  msg += "</ul>";
+  $hudContainer.find("#points").html(msg);
 }
 
 
@@ -218,7 +261,7 @@ function updateHUDButtonsState () {
 
   // Display a 'review game' button when game is finished
   if (!reviewMode) {
-    if (gameEngine.canPlayInCurrentBranch() && gameStatus === 'ongoing') {
+    if (canPlayInCurrentBranch() && gameStatus === 'ongoing') {
       $hudContainer.find('.create-review').css('display', 'none');
       $hudContainer.find('.reviews').css('display', 'none');
     } else {
@@ -395,6 +438,7 @@ if (!reviewMode) {
     serverMoveTree = gameEngine.movesRoot.createCopy();
     currentUndoRequest = undefined;
     countingPointsMode = false;
+    markedAsDead = [];
     updateHUDButtonsState();
   });
 
