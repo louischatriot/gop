@@ -12,8 +12,14 @@ var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, stateChangedEvent;
 var updateDisplay = true;
-var countingPointsMode = false, markedAsDead = [], shiftDown = false, blackScore, whiteScore;
+var countingPointsMode = false, markedAsDead = $('#marked-dead').html(), shiftDown = false, blackScore, whiteScore;
 var currentUndoRequest;
+
+if (markedAsDead.length === 0) {
+  markedAsDead = [];
+} else {
+  markedAsDead = JSON.parse(markedAsDead);
+}
 
 if (reviewMode) {
   playApiUrl = '/api/review/' + gameId;
