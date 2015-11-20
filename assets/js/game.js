@@ -10,21 +10,21 @@ var gameStatus = $('#game-status').html();
 var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
 var gameEngine = new GameEngine({ size: size });
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
-var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, socketEvent;
+var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, stateChangedEvent;
 var updateDisplay = true;
-var countingPointsMode = false, markedAsDead = [], shiftDown = false;
+var countingPointsMode = false, markedAsDead = [], shiftDown = false, blackScore, whiteScore;
 var currentUndoRequest;
 
 if (reviewMode) {
   playApiUrl = '/api/review/' + gameId;
   resyncApiUrl = '/api/review/' + gameId + '/state';
   focusApiUrl = '/api/review/' + gameId + '/focus';
-  socketEvent = 'review.' + gameId + '.stateChanged';
+  stateChangedEvent = 'review.' + gameId + '.stateChanged';
 } else {
   playApiUrl = '/api/game/' + gameId;
   resyncApiUrl = '/api/game/' + gameId + '/state';
   focusApiUrl = '/api/game/' + gameId + '/focus';
-  socketEvent = 'game.' + gameId + '.stateChanged';
+  stateChangedEvent = 'game.' + gameId + '.stateChanged';
   if (gameStatus !== 'ongoing') { canPlayColor = 'none'; }   // TODO: cleaner handling of canPlayColor
 }
 
@@ -41,6 +41,35 @@ gameEngine.on('captured.change', function (m) { $hudContainer.find('.captured-' 
 gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
 $hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
+
+gameEngine.on('movePlayed', function (m) {
+  if (m.move && m.move.type === Move.types.STONE) {
+    goban.drawStone(m.player, m.move.x, m.move.y);
+  }
+
+  // Warn server if the move originates from the goban
+  if (m.move && (m.move.n > serverMoveTree.getMaxN())) {
+    serverMoveTree.addChildToMove(m.move.parent.n, m.move.n, m.move.type, m.move.player, m.move.x, m.move.y);
+    var data =  { move: m.move.getOwnData(), previousMoveN: m.move.parent.n };
+    $.ajax({ type: 'POST', url: playApiUrl
+           , dataType: 'json', contentType:"application/json; charset=utf-8"
+           , data: JSON.stringify(data) });
+  }
+
+  if (gameEngine.isCurrentBranchDoublePass()) {
+    countingPointsMode = true;
+    updatePointsCount();
+  }
+
+  if (m.move && m.move.type === Move.types.RESIGN) {
+    gameStatus = 'finished';
+  }
+
+  if (updateDisplay) {
+    updateHUDstate();
+    redrawGameTree();
+  }
+});
 
 goban.on('intersection.clicked', function (msg) {
   if (!countingPointsMode) {
@@ -61,63 +90,51 @@ goban.on('intersection.clicked', function (msg) {
       }
     });
 
+    // TODO: should not warn server if list unchanged
+    var data = { deads: g, areDead: !shiftDown };
+    $.ajax({ type: 'POST', url: '/api/game/' + gameId + '/mark-dead'
+           , dataType: 'json', contentType:"application/json; charset=utf-8"
+           , data: JSON.stringify(data)
+           });
+
     updatePointsCount();
   }
 });
 
-gameEngine.on('movePlayed', function (m) {
-  // Move played
-  var msg;
-  if (m.moveNumber === 0) {
-    msg = "No move played yet";
-  } else if (m.move.type === Move.types.PASS) {
-    msg = "Move " + m.moveNumber + ' - ' + m.player + ' passed';
-  } else if (m.move.type === Move.types.RESIGN) {
-    msg = "Move " + m.moveNumber + ' - ' + m.player + ' resigned';
+socket.on('game.' + gameId + '.deads.change', function (msg) {
+  markedAsDead = msg.deads;
+  updatePointsCount();
+});
+
+socket.on('game.' + gameId + '.okFor.change', function (msg) {
+  var message;
+  if (msg.okFor === 'none') {
+    message = "";
   } else {
-    msg = 'Move ' + m.moveNumber + ' - ' + m.player + ' ' + m.move.x + '-' + m.move.y;
-    goban.drawStone(m.player, m.move.x, m.move.y);
+    if (msg.okFor === canPlayColor) {
+      message = "You are OK with the score";
+    } else {
+      message = "Your opponent is OK with the score";
+    }
   }
-  $hudContainer.find('.move-number').html(msg);
+  $hudContainer.find('.ok-for').html(message);
+});
 
-  // Turn
-  if (!gameEngine.canPlayInCurrentBranch()) {
-    $hudContainer.find('.turn').html('Game finished');
-  } else {
-    $hudContainer.find('.turn').html('Turn: ' + gameEngine.getOppositePlayer(m.player));
-  }
-
-  // Warn server if the move originates from the goban
-  if (m.move && (m.move.n > serverMoveTree.getMaxN())) {
-    serverMoveTree.addChildToMove(m.move.parent.n, m.move.n, m.move.type, m.move.player, m.move.x, m.move.y);
-    var data =  { move: m.move.getOwnData(), previousMoveN: m.move.parent.n };
-    $.ajax({ type: 'POST', url: playApiUrl
-           , dataType: 'json', contentType:"application/json; charset=utf-8"
-           , data: JSON.stringify(data) });
-  }
-
-  // If double pass, start counting the points
-  if (gameEngine.isCurrentBranchDoublePass()) {
-    console.log("DBLE PASS");
-    countingPointsMode = true;
-    updatePointsCount();
-  }
-
-  if (updateDisplay) {
-    updateHUDButtonsState();
-    redrawGameTree();
-  }
+socket.on('game.' + gameId + '.bothOk', function () {
+  console.log("SCORING FINISHED");
+  gameStatus = 'finished';
+  updateHUDstate();
 });
 
 
 /**
- * Update board and HUD status
+ * Update scores and markings on the board while counting points
  */
 function updatePointsCount () {
-  var blackScore = gameEngine.captured[GameEngine.players.BLACK]
-    , whiteScore = gameEngine.captured[GameEngine.players.WHITE]
-    , countingBoard = gameEngine.cloneBoard()
-    ;
+  var countingBoard = gameEngine.cloneBoard();
+
+  blackScore = gameEngine.captured[GameEngine.players.BLACK]
+  whiteScore = gameEngine.captured[GameEngine.players.WHITE]
 
   markedAsDead.forEach(function (i) {
     if (gameEngine.board[i.x][i.y]  === GameEngine.players.BLACK) { whiteScore += 1; }
@@ -138,11 +155,7 @@ function updatePointsCount () {
     }
   });
 
-  var msg = "<b>Scores:</b><ul>";
-  msg += "<li>Black: " + blackScore + "</li>";
-  msg += "<li>White: " + whiteScore + "</li>";
-  msg += "</ul>";
-  $hudContainer.find("#points").html(msg);
+  updateHUDstate();
 }
 
 
@@ -153,7 +166,7 @@ function updatePointsCount () {
  * @param {Move} playedMove Optional, a new move that was just played
  * @param {Number} parentMoveNumber Required if playedMove is set, move from which move was played
  */
-socket.on(socketEvent, function (diff) {
+socket.on(stateChangedEvent, function (diff) {
   // TODO: Place move on the right part of the tree (desync possible)
   console.log('RECEIVED NEW DIFF');
   console.log(diff);
@@ -211,7 +224,7 @@ function resyncWithServer () {
 function focusOnMove (n, warnServer) {
   updateDisplay = false;
   gameEngine.backToMove(n);
-  updateHUDButtonsState();
+  updateHUDstate();
   redrawGameTree();
   updateDisplay = true;
 
@@ -227,7 +240,27 @@ function focusOnMove (n, warnServer) {
 /**
  * Such an evocative name
  */
-function updateHUDButtonsState () {
+function updateHUDstate () {
+  // Move just played
+  var msg;
+  if (gameEngine.currentMove.depth === 0) {
+    msg = "No move played yet";
+  } else if (gameEngine.currentMove.type === Move.types.PASS) {
+    msg = "Move " + gameEngine.currentMove.depth + ' - ' + gameEngine.currentMove.player + ' passed';
+  } else if (gameEngine.currentMove.type === Move.types.RESIGN) {
+    msg = "Move " + gameEngine.currentMove.depth + ' - ' + gameEngine.currentMove.player + ' resigned';
+  } else {
+    msg = 'Move ' + gameEngine.currentMove.depth + ' - ' + gameEngine.currentMove.player + ' ' + gameEngine.currentMove.x + '-' + gameEngine.currentMove.y;
+  }
+  $hudContainer.find('.move-number').html(msg);
+
+  // Turn
+  if (!gameEngine.canPlayInCurrentBranch()) {
+    $hudContainer.find('.turn').html('Game finished');
+  } else {
+    $hudContainer.find('.turn').html('Turn: ' + gameEngine.getOppositePlayer(gameEngine.currentMove.player));
+  }
+
   // Pass and resign buttons
   if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && gameEngine.canPlayInCurrentBranch() && gameStatus === 'ongoing') {
     $hudContainer.find('.pass').prop('disabled', false);
@@ -255,13 +288,28 @@ function updateHUDButtonsState () {
   // Points counting
   if (countingPointsMode) {
     $hudContainer.find('#points').css('display', 'block');
+    $hudContainer.find('.scoring-done').remove();
+    msg = "Click on a stone to mark it dead, shit-click to mark it alive<br>";
+    msg += "<b>Scores:</b><ul>";
+    msg += "<li>Black: " + blackScore + "</li>";
+    msg += "<li>White: " + whiteScore + "</li>";
+    msg += "</ul>";
+    if (gameStatus === 'ongoing') { msg += "<button class='scoring-done btn'>Scoring done</button><span class='ok-for' style='margin-left: 10px;'></span>"; }
+    msg += "<br><br>";
+    $hudContainer.find("#points").html(msg);
+    $hudContainer.find('.scoring-done').on('click', function () {
+      $.ajax({ type: 'POST', url: '/api/game/' + gameId + '/agree-on-deads'
+             , dataType: 'json', contentType:"application/json; charset=utf-8"
+             , data: JSON.stringify({})
+             });
+    });
   } else {
     $hudContainer.find('#points').css('display', 'none');
   }
 
   // Display a 'review game' button when game is finished
   if (!reviewMode) {
-    if (canPlayInCurrentBranch() && gameStatus === 'ongoing') {
+    if (gameStatus === 'ongoing') {
       $hudContainer.find('.create-review').css('display', 'none');
       $hudContainer.find('.reviews').css('display', 'none');
     } else {
@@ -439,7 +487,7 @@ if (!reviewMode) {
     currentUndoRequest = undefined;
     countingPointsMode = false;
     markedAsDead = [];
-    updateHUDButtonsState();
+    updateHUDstate();
   });
 
   socket.on('game.' + gameId + '.undoRequest', function (msg) {

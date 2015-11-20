@@ -633,7 +633,6 @@ GameEngine.prototype.undo = function (toUndoNumber) {
  * Currently used to synchronize with server
  * Will place focus on first move (empty board)
  * WARNING: movesTree is not deep copied, needs to be done manually if side effects are to be avoided
- *
  * TODO: right now backToMove needs to be called after a call to this function
  *       bundle functions or find a cleaner way
  */
