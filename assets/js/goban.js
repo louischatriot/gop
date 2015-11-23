@@ -104,11 +104,14 @@ Goban.prototype.drawStone = function (color, x, y, highlight) {
   $stone.css('height', this.stoneSizePercent + '%');
   $stone.css('left', ((x - 0.5) * this.stoneSizePercent) + '%');
   $stone.css('top', ((y - 0.5) * this.stoneSizePercent) + '%');
-  if (highlight) {
-    this.$container.find('.goban-latest-stone').removeClass('goban-latest-stone');   // Only one stone highlighted at once
-    $stone.addClass('goban-latest-stone');
-  }
+  if (highlight) { $stone.append('<div class="highlight-for-' + color + '"></div>'); }
   this.$container.append($stone);
+};
+
+
+Goban.prototype.removeCurrentHighlight = function () {
+  this.$container.find('.highlight-for-black').parent().html('');
+  this.$container.find('.highlight-for-white').parent().html('');
 };
 
 

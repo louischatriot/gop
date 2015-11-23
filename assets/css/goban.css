@@ -41,6 +41,28 @@
   background-size: cover;
 }
 
+.highlight-for-black {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid white;
+  width: 56%;
+  height: 56%;
+  top: 22%;
+  left: 22%;
+  box-sizing: border-box;
+}
+
+.highlight-for-white {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid black;
+  width: 56%;
+  height: 56%;
+  top: 22%;
+  left: 22%;
+  box-sizing: border-box;
+}
+
 .goban-latest-stone {
   border-radius: 50%;
   border: solid 1px red;

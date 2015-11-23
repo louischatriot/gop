@@ -51,6 +51,7 @@ $hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
+  goban.removeCurrentHighlight();
   if (m.move && m.move.type === Move.types.STONE) {
     goban.drawStone(m.player, m.move.x, m.move.y, true);
     clickSound.play();
@@ -407,8 +408,6 @@ function redrawGameTree() {
     $dot.css('top', yPos(move) + 'px');
     if (canPlayColor === 'both') { $dot.css('cursor', 'pointer'); }
     $dot.on('click', function (evt) {
-      console.log('------------------------');
-      console.log(canPlayColor);
       if (canPlayColor !== 'both') { return; }
       var n = $(evt.target).parent().data('n') || $(evt.target).data('n');   // So evil
       focusOnMove(parseInt(n, 10), true);
