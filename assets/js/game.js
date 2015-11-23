@@ -442,7 +442,7 @@ function debounce (wait, fn) {
   };
 }
 
-var playClickSound = debounce(500, function () { clickSound.play(); });
+var playClickSound = debounce(150, function () { clickSound.play(); });
 
 /**
  * END OF COMMON BEHAVIOR
