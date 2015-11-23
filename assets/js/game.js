@@ -54,7 +54,7 @@ gameEngine.on('movePlayed', function (m) {
   goban.removeCurrentHighlight();
   if (m.move && m.move.type === Move.types.STONE) {
     goban.drawStone(m.player, m.move.x, m.move.y, true);
-    clickSound.play();
+    playClickSound();
   }
 
   // Warn server if the move originates from the goban
@@ -430,6 +430,19 @@ function redrawGameTree() {
   $movesContainer.parent().scrollLeft(xPos(gameEngine.currentMove) - ($movesContainer.parent().width() / 2));
   $movesContainer.height(300);
 }
+
+function debounce (wait, fn) {
+  var canRun = true;
+  return function () {
+    if (canRun) {
+      canRun = false;
+      setTimeout(function () { canRun = true; }, wait);
+      fn();
+    }
+  };
+}
+
+function playClickSound = debounce(500, function () { clickSound.play(); });
 
 /**
  * END OF COMMON BEHAVIOR
