@@ -83,7 +83,9 @@ gameEngine.on('movePlayed', function (m) {
 
 goban.on('intersection.clicked', function (msg) {
   if (!countingPointsMode) {
-    gameEngine.play({ type: Move.types.STONE, x: msg.x, y: msg.y });
+    if (canPlayColor === 'both' || canPlayColor === gameEngine.currentPlayer) {
+      gameEngine.play({ type: Move.types.STONE, x: msg.x, y: msg.y });
+    }
   } else {
     // Update list of dead stones
     if (gameEngine.board[msg.x][msg.y] === GameEngine.players.EMPTY) { return; }

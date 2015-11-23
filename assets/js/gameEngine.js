@@ -385,7 +385,7 @@ GameEngine.prototype.playStone = function (x, y) {
 /*
  * Update game tree and warn listeners that move was played
  * Child is created only if it doesn't exist
- * x and y are optional
+ * x and y are optional depending on move type
  */
 GameEngine.prototype.updateGameTree = function (type, x, y) {
   var existingChild = this.currentMove.child(type, this.currentPlayer, x, y);
@@ -422,7 +422,7 @@ GameEngine.prototype.resign = function () {
 
 
 /**
- * Play a move, can be {x,y}, PASS or RESIGN
+ * Play a move, can be a stone, a pass or a resign
  * Return the move that was just played
  */
 GameEngine.prototype.play = function (move) {
@@ -635,8 +635,7 @@ GameEngine.prototype.undo = function (toUndoNumber) {
  * Currently used to synchronize with server
  * Will place focus on first move (empty board)
  * WARNING: movesTree is not deep copied, needs to be done manually if side effects are to be avoided
- * TODO: right now backToMove needs to be called after a call to this function
- *       bundle functions or find a cleaner way
+ *          (generally not the case in server atomic API calls but necessary on the client)
  */
 GameEngine.prototype.replaceGameTree = function (movesTree) {
   var self = this;
@@ -647,6 +646,7 @@ GameEngine.prototype.replaceGameTree = function (movesTree) {
     self.allMoves[move.n] = move;
     self.maxMoveNumber = Math.max(self.maxMoveNumber, move.n);
   });
+  this.currentMove = this.movesRoot;
 };
 
 
