@@ -69,6 +69,8 @@ gameEngine.on('movePlayed', function (m) {
   if (gameEngine.isCurrentBranchDoublePass()) {
     countingPointsMode = true;
     updatePointsCount();
+  } else {
+    countingPointsMode = false;
   }
 
   if (m.move && m.move.type === Move.types.RESIGN) {
