@@ -1,5 +1,6 @@
 /**
  * Play and review page
+ * Variables definition
  */
 var gobanContainer = "#the-goban", hudContainer = "#hud";
 var $gobanContainer = $(gobanContainer), $hudContainer = $(hudContainer)
@@ -9,7 +10,6 @@ var reviewMode = $('#review-mode').html() === 'true';
 var gameStatus = $('#game-status').html();
 var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
 var gameEngine = new GameEngine({ size: size });
-var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, stateChangedEvent;
 var updateDisplay = true;
 var countingPointsMode = false, markedAsDead = $('#marked-dead').html(), shiftDown = false, blackScore, whiteScore;
@@ -32,12 +32,14 @@ if (reviewMode) {
   resyncApiUrl = '/api/game/' + gameId + '/state';
   focusApiUrl = '/api/game/' + gameId + '/focus';
   stateChangedEvent = 'game.' + gameId + '.stateChanged';
-  if (gameStatus !== 'ongoing') { canPlayColor = 'none'; }   // TODO: cleaner handling of canPlayColor
+  if (gameStatus === 'stale') { gameStatus = 'ongoing'; }   // Correct short desync
+  if (gameStatus !== 'ongoing') { canPlayColor = 'none'; }
 }
 
 $(document).on('keydown', function (e) { if (e.keyCode === 16) { shiftDown = true; } });
 $(document).on('keyup', function (e) { if (e.keyCode === 16) { shiftDown = false; } });
 
+var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
 
 /**
  * Common behavior

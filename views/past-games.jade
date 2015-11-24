@@ -1,0 +1,17 @@
+extends layout-user
+
+block head
+  title Past games
+
+block content
+  h3 All finished games
+  div#list
+  button.btn.btn-block#load-more Load more
+  div#listInitialData(style="display: none;")
+    =games
+
+block append specificJs
+  script(type="text/javascript", src="/assets/js/pastGames.js")
+
+
+

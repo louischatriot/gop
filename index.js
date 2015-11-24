@@ -30,6 +30,7 @@ api.post('/game/:id/agree-on-deads', games.agreeOnDeads);
 api.post('/review/:id', games.reviewPlayApi);
 api.post('/review/:id/focus', games.changeReviewFocusApi);
 api.get('/review/:id/state', games.getReviewStateApi);
+api.get('/past-games', games.pastGamesApi);
 
 
 // Auth with Google
@@ -48,6 +49,7 @@ webapp.get('/review/:id', games.review);
 webapp.get('/open-challenges', challenges.openChallenges);
 webapp.get('/players', users.allPlayersPage);
 webapp.get('/games', games.games);
+webapp.get('/past-games', games.pastGames);
 
 
 // Declare subrouters

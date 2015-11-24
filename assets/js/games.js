@@ -27,19 +27,7 @@ listTemplate += '{{#staleGames.length}}</tbody></table>{{/staleGames.length}}'
 listTemplate += '{{^staleGames.length}}No stale game<br><br>{{/staleGames.length}}'
 
 
-listTemplate += '<div><b>Past games</b></div>'
-listTemplate += '{{#pastGames.length}}<table class="table table-hover"><thead><th>Players (black vs white)</th><th>Board size</th><th>Name</th></thead><tbody>{{/pastGames.length}}'
-listTemplate += '{{#pastGames.length}}{{#pastGames}} <tr href="/web/game/{{_id}}">'
-  listTemplate += '<td>{{blackPlayerName}} vs {{whitePlayerName}}</td>'
-  listTemplate += '<td>{{size}}x{{size}}</td>'
-  listTemplate += '<td>{{name}}</td>'
-listTemplate += '</tr>{{/pastGames}}{{/pastGames.length}}'
-listTemplate += '{{#pastGames.length}}</tbody></table>{{/pastGames.length}}'
-listTemplate += '{{^pastGames.length}}No past game{{/pastGames.length}}'
-
 function updateList(data) {
-  data.currentGamesEmpty = data.currentGames.length === 0;
-  data.pastGamesEmpty = data.pastGames.length === 0;
   $('#list').html(Mustache.render(listTemplate, data));
 
   $('tbody tr').css('cursor', 'pointer');
