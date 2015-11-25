@@ -288,7 +288,7 @@ function updateHUDstate () {
   if (countingPointsMode) {
     $hudContainer.find('#points').css('display', 'block');
     $hudContainer.find('.scoring-done').remove();
-    msg = "Click on a stone to mark it dead, shit-click to mark it alive<br>";
+    msg = "Click on a stone to mark it dead, shift-click to mark it alive<br>";
     msg += "<b>Scores:</b><ul>";
     msg += "<li>Black: " + blackScore + "</li>";
     msg += "<li>White: " + whiteScore + "</li>";
