@@ -351,15 +351,15 @@ function redrawGameTree() {
   });
 
   // "Horizontalize" graph - step 1
-  var depths = [];
+  depths = [];
   tree.traverse(function (move) {
     if (!depths[move.depth]) { depths[move.depth] = []; }
     depths[move.depth].push(move);
   });
-  tree.traverse(function (move) {
-    if (!move.parent) { return; }
+  tree.postOrderTraverse(function (move) {
+    if (!move.children) { return; }
 
-    var delta = move.parent.yPos - move.yPos;
+    var delta = move.children[0].yPos - move.yPos;
     if (delta > 0) {
       var begun = false;
       depths[move.depth].forEach(function (m) {
@@ -372,15 +372,15 @@ function redrawGameTree() {
   });
 
   // "Horizontalize" graph - step 2
-  depths = [];
+  var depths = [];
   tree.traverse(function (move) {
     if (!depths[move.depth]) { depths[move.depth] = []; }
     depths[move.depth].push(move);
   });
-  tree.postOrderTraverse(function (move) {
-    if (!move.children) { return; }
+  tree.traverse(function (move) {
+    if (!move.parent) { return; }
 
-    var delta = move.children[0].yPos - move.yPos;
+    var delta = move.parent.yPos - move.yPos;
     if (delta > 0) {
       var begun = false;
       depths[move.depth].forEach(function (m) {
