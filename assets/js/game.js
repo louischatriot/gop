@@ -53,7 +53,7 @@ $hudContainer.find('#pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('#resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
-  markedAsDead = [];
+  if (reviewMode) { markedAsDead = []; }   // Always forget marked as dead stones in review mode to avoid polluting it on other branches
   goban.removeCurrentHighlight();
   if (m.move && m.move.type === Move.types.STONE) {
     goban.drawStone(m.player, m.move.x, m.move.y, true);
