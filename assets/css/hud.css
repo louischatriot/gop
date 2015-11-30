@@ -1,3 +1,30 @@
+#captured {
+  margin-bottom: 20px;
+}
+
+#pass {
+  margin-bottom: 20px;
+  margin-right: 20px;
+}
+
+#resign {
+  margin-bottom: 20px;
+}
+
+#undo {
+  margin-bottom: 10px;
+}
+
+#points {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+#create-review {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
 #moves {
   border : 1px solid black;
   overflow-x: scroll;

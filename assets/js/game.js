@@ -49,8 +49,8 @@ gameEngine.on('board.cleared', function () { goban.clearBoard(); });
 gameEngine.on('captured.change', function (m) { $hudContainer.find('.captured-' + m.player).html(m.captured); });
 gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
 gameEngine.on('intersection.point', function (m) { goban.drawPoint(m.owner, m.x, m.y); });
-$hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
-$hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
+$hudContainer.find('#pass').on('click', function () { gameEngine.pass(); });
+$hudContainer.find('#resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
   markedAsDead = [];
@@ -263,18 +263,18 @@ function updateHUDstate () {
 
   // Pass and resign buttons
   if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && gameEngine.canPlayInCurrentBranch()) {
-    $hudContainer.find('.pass').prop('disabled', false);
-    $hudContainer.find('.resign').prop('disabled', false);
+    $hudContainer.find('#pass').prop('disabled', false);
+    $hudContainer.find('#resign').prop('disabled', false);
   } else {
-    $hudContainer.find('.pass').prop('disabled', true);
-    $hudContainer.find('.resign').prop('disabled', true);
+    $hudContainer.find('#pass').prop('disabled', true);
+    $hudContainer.find('#resign').prop('disabled', true);
   }
 
   // Undo
   if (gameEngine.currentMove.type === Move.types.RESIGN || gameStatus !== 'ongoing') {
-    $hudContainer.find('.undo').prop('disabled', true);
+    $hudContainer.find('#undo').prop('disabled', true);
   } else {
-    $hudContainer.find('.undo').prop('disabled', false);
+    $hudContainer.find('#undo').prop('disabled', false);
   }
   if (currentUndoRequest) {
     if (currentUndoRequest.moveNumber + 1 < gameEngine.currentMove.n) {
@@ -295,7 +295,6 @@ function updateHUDstate () {
     msg += "<li>White: " + whiteScore + "</li>";
     msg += "</ul>";
     if (gameStatus === 'ongoing') { msg += "<button class='scoring-done btn'>Scoring done</button><span class='ok-for' style='margin-left: 10px;'></span>"; }
-    msg += "<br><br>";
     $hudContainer.find("#points").html(msg);
     $hudContainer.find('.scoring-done').on('click', function () {
       $.ajax({ type: 'POST', url: '/api/game/' + gameId + '/agree-on-deads'
@@ -310,11 +309,11 @@ function updateHUDstate () {
   // Display a 'review game' button when game is finished
   if (!reviewMode) {
     if (gameStatus === 'ongoing') {
-      $hudContainer.find('.create-review').css('display', 'none');
-      $hudContainer.find('.reviews').css('display', 'none');
+      $hudContainer.find('#create-review').css('display', 'none');
+      $hudContainer.find('#reviews').css('display', 'none');
     } else {
-      $hudContainer.find('.create-review').css('display', 'block');
-      $hudContainer.find('.reviews').css('display', 'block');
+      $hudContainer.find('#create-review').css('display', 'block');
+      $hudContainer.find('#reviews').css('display', 'block');
     }
   }
 }
@@ -459,7 +458,7 @@ if (!reviewMode) {
   /**
    * Reviews list
    */
-  var reviewsTemplate = '<br>';
+  var reviewsTemplate = '';
 
   reviewsTemplate += '{{^activeReviews.length}}<b>No active review</b><br>{{/activeReviews.length}}';
   reviewsTemplate += '{{#activeReviews.length}}<b>Active reviews</b><ul>';
@@ -471,23 +470,23 @@ if (!reviewMode) {
   reviewsTemplate += '{{#inactiveReviews}}<li><a href="/web/review/{{_id}}">By {{reviewerName}}</a></li>{{/inactiveReviews}}';
   reviewsTemplate += '</ul>{{/inactiveReviews.length}}';
 
-  $hudContainer.find('.create-review').on('click', function () {
+  $hudContainer.find('#create-review').on('click', function () {
     document.location = '/web/review/new?gameId=' + gameId;
   });
 
   socket.on('game.' + gameId + '.reviewsChange', function (msg) {
-    $hudContainer.find('.reviews').css('display', 'block');
-    $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, msg));
+    $hudContainer.find('#reviews').css('display', 'block');
+    $hudContainer.find('#reviews').html(Mustache.render(reviewsTemplate, msg));
   });
-  $hudContainer.find('.reviews').html(Mustache.render(reviewsTemplate, JSON.parse($('#initial-reviews').html())));
+  $hudContainer.find('#reviews').html(Mustache.render(reviewsTemplate, JSON.parse($('#initial-reviews').html())));
 
 
   /**
    * Undo
    */
   function requestUndo () { $.ajax({ type: 'GET', url: '/api/game/' + gameId + '/undo' }); }
-  $hudContainer.find('.undo').css('display', 'block');
-  $hudContainer.find('.undo').on('click', requestUndo);
+  $hudContainer.find('#undo').css('display', 'block');
+  $hudContainer.find('#undo').on('click', requestUndo);
 
   socket.on('game.' + gameId + '.undo', function (msg) {
     gameEngine.undo(msg.undone);
@@ -502,7 +501,7 @@ if (!reviewMode) {
   });
 
   socket.on('game.' + gameId + '.undoRequest', function (msg) {
-    var message = '<br>';
+    var message = '';
     if (msg.requester === canPlayColor) {
       message += 'You requested an undo'
     } else {

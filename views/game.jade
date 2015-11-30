@@ -23,7 +23,7 @@ block content
       div
         b.turn Turn: black
       div.move-number No move played yet
-      ul
+      ul#captured
         li #{game.blackPlayerName} (black): <span class="captured-black">0</span> captured
 
         li #{game.whitePlayerName} (white): <span class="captured-white">0</span> captured
@@ -31,20 +31,15 @@ block content
         //-b &lt;
       //-button.btn.next(style='display: none;')
         //-b &gt;
-      br
-      button.btn.pass Pass
-      button.btn.resign Resign
-      br
-      br
-      button.btn.undo(style="display: none;") Ask for undo
+      button.btn#pass Pass
+      button.btn#resign Resign
+      button.btn#undo(style="display: none;") Ask for undo
       div#undo-request(style="display:none;")
-      br
-      br
       div#moves(style="display:none;")
         div.inner
       div#points(style="display: none;")
-      button.btn.create-review(style="display: none;") Review game
-      div.reviews(style="display: none;")
+      button.btn#create-review(style="display: none;") Review game
+      div#reviews(style="display: none;")
 
     div#can-play(style="display: none;") #{canPlay}
     div#game-id(style="display: none;") #{game._id}
