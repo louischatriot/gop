@@ -10,7 +10,11 @@ block head
   link(href="/assets/css/hud.css", rel="stylesheet")
 
 block content
-  h4 #{game.gameName ? 'Review of ' + game.gameName : game.name} - #{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size}
+  h4(style="margin-bottom: 30px;")
+    if game.gameId
+      | Review of <a href="/web/game/#{game.gameId}">#{game.gameName}</a> by #{game.reviewerName} <span style="color: #999;">(#{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size})</span>
+    else
+      | #{game.name} - #{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size}
   div.row
     div.span7
       div#the-goban
