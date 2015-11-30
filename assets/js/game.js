@@ -53,6 +53,7 @@ $hudContainer.find('.pass').on('click', function () { gameEngine.pass(); });
 $hudContainer.find('.resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
+  markedAsDead = [];
   goban.removeCurrentHighlight();
   if (m.move && m.move.type === Move.types.STONE) {
     goban.drawStone(m.player, m.move.x, m.move.y, true);
@@ -261,7 +262,7 @@ function updateHUDstate () {
   }
 
   // Pass and resign buttons
-  if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && gameEngine.canPlayInCurrentBranch() && gameStatus === 'ongoing') {
+  if ((canPlayColor === 'both' || gameEngine.currentPlayer === canPlayColor) && gameEngine.canPlayInCurrentBranch()) {
     $hudContainer.find('.pass').prop('disabled', false);
     $hudContainer.find('.resign').prop('disabled', false);
   } else {

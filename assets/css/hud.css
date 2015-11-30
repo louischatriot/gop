@@ -1,6 +1,7 @@
 #moves {
   border : 1px solid black;
   overflow-x: scroll;
+  margin-bottom: 30px;
 }
 
 #moves .inner {
