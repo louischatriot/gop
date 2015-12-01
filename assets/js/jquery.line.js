@@ -69,7 +69,7 @@
 
               });
   };
-  $.fn.line.defaults = {  zindex : 10000,
+  $.fn.line.defaults = {  zindex : 1000,
                           color : '#000000',
                           stroke: "1",
                           style: "solid",
