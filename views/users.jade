@@ -8,9 +8,9 @@ block content
   div#lists
   div#listTemplate(style="display: none;")
     |<b>Connected players</b><ul>
-    |{{#connectedUsers}} <li>{{name}}</li> {{/connectedUsers}}
+    |{{#connectedUsers}} <li><a href="/web/user/{{_id}}">{{name}}</a></li> {{/connectedUsers}}
     |</ul><b>Disconnected players</b><ul>
-    |{{#disconnectedUsers}} <li>{{name}}</li> {{/disconnectedUsers}} {{^disconnectedUsers}} No disconnected player {{/disconnectedUsers}}
+    |{{#disconnectedUsers}} <li><a href="/web/user/{{_id}}">{{name}}</a></li> {{/disconnectedUsers}} {{^disconnectedUsers}} No disconnected player {{/disconnectedUsers}}
     |</ul>
   div#connectedInitialData(style="display: none;")
     =connectedUsers
@@ -19,4 +19,4 @@ block content
 
 
 block append specificJs
-  script(type="text/javascript", src="/assets/js/players.js")
+  script(type="text/javascript", src="/assets/js/users.js")

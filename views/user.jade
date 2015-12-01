@@ -5,3 +5,25 @@ block head
 
 block content
   h3 User #{user.name}
+
+  if games.length === 0
+    | No games played
+  else
+    table.table.table-hover
+      thead
+        tr
+          th.span4 Players (black vs white)
+          th.span1 Board size
+          th.span4 Name
+          th.span3 Result
+      tbody
+        each game in games
+          tr
+            tr(href="/web/game/#{game._id}", style="cursor: pointer;")
+              td #{game.blackPlayerName} vs #{game.whitePlayerName}
+              td #{game.size} vs #{game.size}
+              td #{game.name}
+              td #{game.resultExpanded}
+
+block append specificJs
+  script(type="text/javascript", src="/assets/js/user.js")
