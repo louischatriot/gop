@@ -15,7 +15,7 @@ block navbarContents
 
   ul.pull-right.nav
     li
-      a= username
+      a(href="/web/user/#{loggedInUser._id}") #{loggedInUser.name}
     li
       a(href="/logout") (logout)
 

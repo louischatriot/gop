@@ -47,9 +47,11 @@ webapp.get('/game/:id', games.game);
 webapp.get('/review/new', games.createReview);
 webapp.get('/review/:id', games.review);
 webapp.get('/open-challenges', challenges.openChallenges);
-webapp.get('/players', users.allPlayersPage);
+webapp.get('/players', function (req, res) { return res.redirect(302, '/web/users'); });
+webapp.get('/users', users.allUsersPage);
 webapp.get('/games', games.games);
 webapp.get('/past-games', games.pastGames);
+webapp.get('/user/:id', users.userPage);
 
 
 // Declare subrouters

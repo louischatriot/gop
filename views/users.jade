@@ -8,9 +8,9 @@ block content
   div#lists
   div#listTemplate(style="display: none;")
     |<b>Connected players</b><ul>
-    |{{#connectedUsers}} <li>{{name}} - {{email}}</li> {{/connectedUsers}}
+    |{{#connectedUsers}} <li>{{name}}</li> {{/connectedUsers}}
     |</ul><b>Disconnected players</b><ul>
-    |{{#disconnectedUsers}} <li>{{name}} - {{email}}</li> {{/disconnectedUsers}} {{^disconnectedUsers}} No disconnected player {{/disconnectedUsers}}
+    |{{#disconnectedUsers}} <li>{{name}}</li> {{/disconnectedUsers}} {{^disconnectedUsers}} No disconnected player {{/disconnectedUsers}}
     |</ul>
   div#connectedInitialData(style="display: none;")
     =connectedUsers
