@@ -22,6 +22,7 @@ app.use(middlewares.session);
 // API
 api.use(middlewares.apiMustBeLoggedIn);
 api.post('/create-challenge', challenges.createChallenge);
+api.put('/challenge/:id', challenges.changeNegotiableParameters);
 api.post('/game/:id', games.gamePlayApi);
 api.get('/game/:id/state', games.getGameStateApi);
 api.get('/game/:id/undo', games.askForUndo);

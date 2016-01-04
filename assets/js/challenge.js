@@ -1,3 +1,60 @@
+var challenge = JSON.parse($('#challenge').html())
+  , user = JSON.parse($('#user').html())
+  ;
+
+
+// DEV
+//challenge.challengers = [{ _id: 'id1', name: 'LCLC' }, { _id: 'id2', name: 'JCJC' }];
+
+//challenge.currentChallenger = { _id: 'id2' };
+
+
+socket.on('challenger.connected', function (m) {
+  document.location = '/web/game/' + challenge._id;
+});
+
+
+
+/**
+ * Update visual representation of global data variable
+ */
+var screens = { WAITING: '#waiting-banner-screen', NEGOTIATION: '#negotiation-screen' };
+
+function updateScreen () {
+  var screenId = challenge && challenge.challengers ? screens.NEGOTIATION : screens.WAITING
+    , template = $(screenId).html()
+    , data = { challenge: challenge, user: user }
+    ;
+
+  // Really ugly but it seems that Jade is forcing my hand here
+  // TODO: find out why Jade supposedly plain text parts are not plain text
+  // TODO: CHANGE MUSTACHE DELIMITERS
+  template = template.replace(/&#47;/g, '/');
+  template = template.replace(/&lt;/g, '<');
+  template = template.replace(/&gt;/g, '>');
+
+  data.iAmCreator = user._id === challenge.creatorId;
+  data.iAmChallenger = challenge.currentChallenger && user._id === challenge.currentChallenger._id;
+  data.canModifyHandicap = data.iAmCreator || data.iAmChallenger;
+
+  if (challenge.challengers && challenge.currentChallenger) {
+    data.challenge.challengers.forEach(function (d) {
+      if (d._id === challenge.currentChallenger._id) {
+        d.selected = true;
+      }
+    });
+  }
+
+  var contents = Mustache.render(template, data);
+  $('#current-screen').html(contents);
+}
+
+
+
+/**
+ * Regularly update banner contents
+ * Independent from the rest of the application, no need to handle stop and starts
+ */
 var quotes = [
   "White wins"
 , "Never try to smoke a bamboo joint"
@@ -29,9 +86,4 @@ function changeQuote () {
 
 setInterval(changeQuote, interval);
 changeQuote();
-
-
-socket.on('challenger.connected', function (m) {
-  document.location = '/web/game/' + $('#challenge-id').html();
-});
 
