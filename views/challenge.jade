@@ -28,13 +28,13 @@ block content
             {{/challenge.challengers}}
           </select>
       div.control-group
-        label.control-label(for="handicap") Handicap
+        label.control-label(for="handicap") Handicap (not working yet)
         div.controls
           | <select id="handicap" class="input-small" {{^canModifyHandicap}}disabled{{/canModifyHandicap}}>
           each val in [0, 2, 3, 4, 5, 6, 7, 8, 9]
             option(value="#{val}") #{val}
           | </select>
-    button.btn.btn-primary#accept-terms Accept challenge terms
+    button.btn.btn-primary#accept-terms {{buttonMessage}}
     | -->
 
   div#challenge-canceled(style="display: none;")

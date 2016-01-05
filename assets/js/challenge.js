@@ -14,7 +14,7 @@ challenge.currentChallengerId = 'id2';
  * TODO: check there as an actual change to reactivate accept button
  */
 socket.on('challenge.' + challenge._id + '.modified', function (m) {
-  console.log('-----------------------');
+  console.log('---NEW CHALLENGE RECEIVED');
   console.log(m);
   challenge = m.challenge;
   updateScreen();
@@ -72,6 +72,15 @@ function updateScreen () {
 
   data.iAmCreator = isCreator();
   data.canModifyHandicap = isCreator() || isCurrentChallenger();
+  data.waitingForOpponent = (isCreator() && challenge.creatorOK && !challenge.currentChallengerOK) ||
+                            (isCurrentChallenger() && !challenge.creatorOK && challenge.currentChallengerOK);
+  data.waitingForMe = (isCurrentChallenger() && challenge.creatorOK && !challenge.currentChallengerOK) ||
+                            (isCreator() && !challenge.creatorOK && challenge.currentChallengerOK);
+  data.bothOk = challenge.creatorOK && challenge.currentChallengerOK;
+  data.buttonMessage = "Accept challenge terms";
+  if (data.waitingForOpponent) { data.buttonMessage = "Accepted terms, waiting for opponent"; }
+  if (data.waitingForMe) { data.buttonMessage = "Opponent accepted terms, agree?"; }
+  if (data.bothOk) { data.buttonMessage = "Both OK, launching game"; }
 
   if (challenge && challenge.challengers && challenge.currentChallengerId) {
     data.challenge.challengers.forEach(function (d) {
@@ -80,7 +89,6 @@ function updateScreen () {
       }
     });
   }
-
 
   var contents = Mustache.render(template, data);
   $('#current-screen').html(contents);
@@ -91,6 +99,8 @@ function updateScreen () {
   if (challenge && challenge.handicap !== undefined) {
     $('#current-screen #handicap option[value=' + challenge.handicap + ']').attr('selected', true);
   }
+  if (data.bothOk || data.waitingForOpponent) { $('#current-screen #accept-terms').attr('disabled', true); }
+  if (!isCreator() && !isCurrentChallenger()) { $('#current-screen #accept-terms').css('display', 'none'); }
 }
 
 
