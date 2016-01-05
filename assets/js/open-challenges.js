@@ -7,7 +7,7 @@ var listTemplate = ''
 $('body').append($ghostLink);
 
 listTemplate += '{{^empty}}<table class="table table-hover"><thead><th>Creator</th><th>Board size</th><th>Name</th></thead><tbody>{{/empty}}'
-listTemplate += '{{^empty}}{{#openChallenges}} <tr href="/web/game/{{_id}}">'
+listTemplate += '{{^empty}}{{#openChallenges}} <tr href="/web/challenge/{{_id}}">'
   listTemplate += '<td>{{creatorName}}</td>'
   listTemplate += '<td>{{size}}x{{size}}</td>'
   listTemplate += '<td>{{name}}</td>'

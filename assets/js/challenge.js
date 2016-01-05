@@ -4,40 +4,71 @@ var challenge = JSON.parse($('#challenge').html())
 
 
 // DEV
-//challenge.challengers = [{ _id: 'id1', name: 'LCLC' }, { _id: 'id2', name: 'JCJC' }];
+challenge.challengers = [{ _id: 'id1', name: 'LCLC' }, { _id: 'id2', name: 'JCJC' }];
 
-//challenge.currentChallenger = { _id: 'id2' };
+challenge.currentChallenger = { _id: 'id2' };
 
 
-socket.on('challenger.connected', function (m) {
-  document.location = '/web/game/' + challenge._id;
+/**
+ * Update current screen when challenge was modified on server
+ * TODO: check there as an actual change to reactivate accept button
+ */
+socket.on('challenge.' + challenge._id + '.modified', function (m) {
+  console.log("----------------------------");
+  console.log(m);
+  challenge = m.challenge;
+  updateScreen();
 });
 
+socket.on('challenge.' + challenge._id + '.canceled', function (m) {
+  challenge = null;
+  updateScreen();
+});
+
+
+/**
+ * Current user status
+ */
+function isCreator () { return challenge && user._id === challenge.creatorId; }
+function isCurrentChallenger () { return challenge && challenge.currentChallenger && user._id === challenge.currentChallenger._id; }
+
+
+/**
+ * Notify server of changes to the challenge
+ * @param {Event} evt The click event triggered on the accept button
+ */
+function notifyServer (evt) {
+  var data = {};
+
+  if (isCreator()) {
+    data.challengerId = $(evt.currentTarget).parent().find('#challenger').val();
+  }
+
+  if (isCreator() || isCurrentChallenger()) {
+    data.handicap = $(evt.currentTarget).parent().find('#handicap').val();
+  }
+}
 
 
 /**
  * Update visual representation of global data variable
  */
-var screens = { WAITING: '#waiting-banner-screen', NEGOTIATION: '#negotiation-screen' };
+var screens = { WAITING: '#waiting-banner-screen', NEGOTIATION: '#negotiation-screen', CANCELED: '#challenge-canceled' };
 
 function updateScreen () {
-  var screenId = challenge && challenge.challengers ? screens.NEGOTIATION : screens.WAITING
-    , template = $(screenId).html()
-    , data = { challenge: challenge, user: user }
-    ;
+  var screenId = challenge && challenge.challengers && challenge.challengers.length > 0 ? screens.NEGOTIATION : screens.WAITING
+  if (!challenge) { screenId = screens.CANCELED; }
+  var template = $(screenId).html()
+    , data = { challenge: challenge, user: user };
 
-  // Really ugly but it seems that Jade is forcing my hand here
-  // TODO: find out why Jade supposedly plain text parts are not plain text
-  // TODO: CHANGE MUSTACHE DELIMITERS
-  template = template.replace(/&#47;/g, '/');
-  template = template.replace(/&lt;/g, '<');
-  template = template.replace(/&gt;/g, '>');
+  // To ensure that innerHTML doesn't modify the Mustache templates we need to encapsulate them in HTML comments
+  template = template.replace(/<!--/, '');
+  template = template.replace(/-->/g, '');
 
-  data.iAmCreator = user._id === challenge.creatorId;
-  data.iAmChallenger = challenge.currentChallenger && user._id === challenge.currentChallenger._id;
-  data.canModifyHandicap = data.iAmCreator || data.iAmChallenger;
+  data.iAmCreator = isCreator();
+  data.canModifyHandicap = isCreator() || isCurrentChallenger();
 
-  if (challenge.challengers && challenge.currentChallenger) {
+  if (challenge && challenge.challengers && challenge.currentChallenger) {
     data.challenge.challengers.forEach(function (d) {
       if (d._id === challenge.currentChallenger._id) {
         d.selected = true;
@@ -47,8 +78,10 @@ function updateScreen () {
 
   var contents = Mustache.render(template, data);
   $('#current-screen').html(contents);
-}
 
+  // Reattach event listeners
+  $('#current-screen #accept-terms').on('click', notifyServer);
+}
 
 
 /**

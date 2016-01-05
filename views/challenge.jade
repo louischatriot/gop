@@ -13,27 +13,32 @@ block content
       div.quote
 
   div#negotiation-screen(style="display: none;")
+    | <!--
     h4 Challenge - {{challenge.name}} - {{challenge.size}}x{{challenge.size}}
     br
     form.form-horizontal
       div.control-group
         label.control-label(for="challenger") Selected challenger
         div.controls.
-          &lt;select id="challenger" class="input" {{^iAmCreator}}disabled{{/iAmCreator}}&gt;
+          <select id="challenger" class="input" {{^iAmCreator}}disabled{{/iAmCreator}}>
             {{#challenge.challengers}}
-            &lt;option value="{{_id}}" {{#selected}}selected{{/selected}}&gt;
-            {{name}}
-            &lt;/option&gt;
+              <option value="{{_id}}" {{#selected}}selected{{/selected}}>
+              {{name}}
+              </option>
             {{/challenge.challengers}}
-          &lt;/select&gt;
+          </select>
       div.control-group
         label.control-label(for="handicap") Handicap
         div.controls
-          | &lt;select id="handicap" class="input-small" {{^canModifyHandicap}}disabled{{/canModifyHandicap}}&gt;
+          | <select id="handicap" class="input-small" {{^canModifyHandicap}}disabled{{/canModifyHandicap}}>
           each val in [0, 2, 3, 4, 5, 6, 7, 8, 9]
             option(value="#{val}") #{val}
-          | &lt;/select&gt;
-    button.btn.btn-primary Accept challenge terms
+          | </select>
+    button.btn.btn-primary#accept-terms Accept challenge terms
+    | -->
+
+  div#challenge-canceled(style="display: none;")
+    h1 Challenge canceled
 
   div#challenge(style="display: none;")
     =challengeAsJSON
