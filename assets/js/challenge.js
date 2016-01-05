@@ -2,16 +2,9 @@ var challenge = JSON.parse($('#challenge').html())
   , user = JSON.parse($('#user').html())
   ;
 
-
-// DEV
-challenge.challengers = [{ _id: 'id1', name: 'LCLC' }, { _id: 'id2', name: 'JCJC' }];
-
-challenge.currentChallengerId = 'id2';
-
-
 /**
  * Update current screen when challenge was modified on server
- * TODO: check there as an actual change to reactivate accept button
+ * Switch to game page when game is actually launched
  */
 socket.on('challenge.' + challenge._id + '.modified', function (m) {
   console.log('---NEW CHALLENGE RECEIVED');
@@ -23,6 +16,10 @@ socket.on('challenge.' + challenge._id + '.modified', function (m) {
 socket.on('challenge.' + challenge._id + '.canceled', function (m) {
   challenge = null;
   updateScreen();
+});
+
+socket.on('game.' + challenge._id + '.created', function () {
+  document.location = '/web/game/' + challenge._id;
 });
 
 
@@ -143,6 +140,9 @@ changeQuote();
 
 /**
  * INITIALIZATION
+ * For all challengers, the first refresh will be done after socket update
  */
-updateScreen();
+if (isCreator()) {
+  updateScreen();
+}
 
