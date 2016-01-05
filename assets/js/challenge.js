@@ -87,3 +87,9 @@ function changeQuote () {
 setInterval(changeQuote, interval);
 changeQuote();
 
+
+/**
+ * INITIALIZATION
+ */
+updateScreen();
+
