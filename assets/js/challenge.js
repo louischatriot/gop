@@ -6,7 +6,7 @@ var challenge = JSON.parse($('#challenge').html())
 // DEV
 challenge.challengers = [{ _id: 'id1', name: 'LCLC' }, { _id: 'id2', name: 'JCJC' }];
 
-challenge.currentChallenger = { _id: 'id2' };
+challenge.currentChallengerId = 'id2';
 
 
 /**
@@ -14,7 +14,7 @@ challenge.currentChallenger = { _id: 'id2' };
  * TODO: check there as an actual change to reactivate accept button
  */
 socket.on('challenge.' + challenge._id + '.modified', function (m) {
-  console.log("----------------------------");
+  console.log('-----------------------');
   console.log(m);
   challenge = m.challenge;
   updateScreen();
@@ -30,7 +30,7 @@ socket.on('challenge.' + challenge._id + '.canceled', function (m) {
  * Current user status
  */
 function isCreator () { return challenge && user._id === challenge.creatorId; }
-function isCurrentChallenger () { return challenge && challenge.currentChallenger && user._id === challenge.currentChallenger._id; }
+function isCurrentChallenger () { return challenge && user._id === challenge.currentChallengerId; }
 
 
 /**
@@ -45,8 +45,13 @@ function notifyServer (evt) {
   }
 
   if (isCreator() || isCurrentChallenger()) {
-    data.handicap = $(evt.currentTarget).parent().find('#handicap').val();
+    data.handicap = parseInt($(evt.currentTarget).parent().find('#handicap').val(), 10);
   }
+
+  $.ajax({ type: 'PUT', url: '/api/challenge/' + challenge._id
+         , dataType: 'json', contentType: "application/json; charset=utf-8"
+         , data: JSON.stringify(data)
+         });
 }
 
 
@@ -68,19 +73,24 @@ function updateScreen () {
   data.iAmCreator = isCreator();
   data.canModifyHandicap = isCreator() || isCurrentChallenger();
 
-  if (challenge && challenge.challengers && challenge.currentChallenger) {
+  if (challenge && challenge.challengers && challenge.currentChallengerId) {
     data.challenge.challengers.forEach(function (d) {
-      if (d._id === challenge.currentChallenger._id) {
+      if (d._id === challenge.currentChallengerId) {
         d.selected = true;
       }
     });
   }
 
+
   var contents = Mustache.render(template, data);
   $('#current-screen').html(contents);
 
-  // Reattach event listeners
+  // Reattach event listeners and populate values
   $('#current-screen #accept-terms').on('click', notifyServer);
+
+  if (challenge && challenge.handicap !== undefined) {
+    $('#current-screen #handicap option[value=' + challenge.handicap + ']').attr('selected', true);
+  }
 }
 
 

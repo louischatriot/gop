@@ -65,7 +65,7 @@ gameEngine.on('movePlayed', function (m) {
     serverMoveTree.addChildToMove(m.move.parent.n, m.move.n, m.move.type, m.move.player, m.move.x, m.move.y);
     var data =  { move: m.move.getOwnData(), previousMoveN: m.move.parent.n };
     $.ajax({ type: 'POST', url: playApiUrl
-           , dataType: 'json', contentType:"application/json; charset=utf-8"
+           , dataType: 'json', contentType: "application/json; charset=utf-8"
            , data: JSON.stringify(data) });
   }
 
