@@ -12,12 +12,15 @@ block head
 block content
   h4(style="margin-bottom: 30px;")
     if game.gameId
-      | Review of <a href="/web/game/#{game.gameId}">#{game.gameName}</a> by #{game.reviewerName} <span style="color: #999;">(#{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size})</span>
+      | Review of <a href="/web/game/#{game.gameId}">#{game.gameName}</a> by #{game.reviewerName} <span style="color: #999;">(#{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size}
+      if game.handicap
+        | &nbsp;H#{game.handicap}
+      | )</span>
     else
       | #{game.name} - #{game.blackPlayerName} vs #{game.whitePlayerName} - #{game.size}x#{game.size}
+      if game.handicap
+        | &nbsp;H#{game.handicap}
 
-    if game.handicap
-      | &nbsp;H#{game.handicap}
   div.row
     div.span7
       div#the-goban
@@ -47,6 +50,7 @@ block content
     div#can-play(style="display: none;") #{canPlay}
     div#game-id(style="display: none;") #{game._id}
     div#size(style="display: none;") #{game.size}
+    div#handicap(style="display: none;") #{game.handicap}
     div#server-move-tree(style="display: none;") #{game.moves}
     div#current-move-number(style="display: none;") #{game.currentMoveNumber}
     div#game-status(style="display: none;") #{game.status}
@@ -56,6 +60,6 @@ block content
 
 block append specificJs
   script(type="text/javascript", src="/assets/js/jquery.line.js")
-  script(type="text/javascript", src="/assets/js/goban.js")
   script(type="text/javascript", src="/assets/js/gameEngine.js")
+  script(type="text/javascript", src="/assets/js/goban.js")
   script(type="text/javascript", src="/assets/js/game.js")

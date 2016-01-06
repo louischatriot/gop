@@ -286,14 +286,11 @@ GameEngine.prototype.initialize = function (hard) {
     }
   }
 
-  this.currentPlayer = GameEngine.players.BLACK;
+  this.currentPlayer = this.handicap && this.handicap > 0 ? GameEngine.players.WHITE : GameEngine.players.BLACK;
   var hl = GameEngine.handicapLines[this.size];
   GameEngine.handicaps[this.handicap || 0].forEach(function (p) {
-    console.log('---- ' + hl[p.x] + ' - ' + hl[p.y]);
     self.board[hl[p.x]][hl[p.y]] = GameEngine.players.BLACK;
   });
-
-  console.log(this.board);
 
   this.captured = {};
   this.captured[GameEngine.players.BLACK] = 0;
@@ -308,6 +305,8 @@ GameEngine.prototype.initialize = function (hard) {
   this.currentMove = this.movesRoot;   // Move 0 is empty board
 
   delete this.currentKo;   // Necessary for reinitializations
+
+  this.emit('initialization.done');
 };
 
 GameEngine.prototype.on = function(evt, listener) {

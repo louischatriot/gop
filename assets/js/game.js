@@ -6,10 +6,11 @@ var gobanContainer = "#the-goban", hudContainer = "#hud";
 var $gobanContainer = $(gobanContainer), $hudContainer = $(hudContainer)
 var gameId = $('#game-id').html();   // That's the review id in case this is a review page
 var size = parseInt($('#size').html(), 10);
+var handicap = $('#size').html() ? parseInt($('#handicap').html()) : 0;
 var reviewMode = $('#review-mode').html() === 'true';
 var gameStatus = $('#game-status').html();
 var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
-var gameEngine = new GameEngine({ size: size, handicap: 2 });
+var gameEngine = new GameEngine({ size: size, handicap: handicap });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, stateChangedEvent;
 var updateDisplay = true;
 var countingPointsMode = false, markedAsDead = $('#marked-dead').html(), shiftDown = false, blackScore, whiteScore;
@@ -40,12 +41,14 @@ $(document).on('keydown', function (e) { if (e.keyCode === 16) { shiftDown = tru
 $(document).on('keyup', function (e) { if (e.keyCode === 16) { shiftDown = false; } });
 
 var goban = new Goban({ size: size, container: gobanContainer, gameEngine: gameEngine, canPlayColor: canPlayColor });
+gameEngine.initialize(true);   // Redundant with GameEngine but necessary for consistency
 
 /**
  * Common behavior
  */
 gameEngine.on('intersection.cleared', function (i) { goban.clearIntersection(i.x, i.y); });
 gameEngine.on('board.cleared', function () { goban.clearBoard(); });
+gameEngine.on('initialization.done', function () { goban.clearBoard(); goban.placeStones(); });
 gameEngine.on('captured.change', function (m) { $hudContainer.find('.captured-' + m.player).html(m.captured); });
 gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
 gameEngine.on('intersection.point', function (m) { goban.drawPoint(m.owner, m.x, m.y); });

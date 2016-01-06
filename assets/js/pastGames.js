@@ -6,10 +6,10 @@ var listTemplate = ''
 
 $('body').append($ghostLink);
 
-listTemplate += '{{#pastGames.length}}<table class="table table-hover"><thead><th class="span4">Players (black vs white)</th><th class="span1">Board size</th><th class="span4">Name</th><th class="span3">Result</th></thead><tbody>{{/pastGames.length}}'
+listTemplate += '{{#pastGames.length}}<table class="table table-hover"><thead><th class="span4">Players (black vs white)</th><th class="span1">Type</th><th class="span4">Name</th><th class="span3">Result</th></thead><tbody>{{/pastGames.length}}'
 listTemplate += '{{#pastGames.length}}{{#pastGames}} <tr href="/web/game/{{_id}}">'
   listTemplate += '<td>{{blackPlayerName}} vs {{whitePlayerName}}</td>'
-  listTemplate += '<td>{{size}}x{{size}}</td>'
+  listTemplate += '<td>{{size}}x{{size}} {{#handicap}}H{{handicap}}{{/handicap}}</td>'
   listTemplate += '<td>{{name}}</td>'
   listTemplate += '<td>{{resultExpanded}}</td>'
 listTemplate += '</tr>{{/pastGames}}{{/pastGames.length}}'

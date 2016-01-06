@@ -13,7 +13,7 @@ block content
       thead
         tr
           th.span4 Players (black vs white)
-          th.span1 Board size
+          th.span1 Type
           th.span4 Name
           th.span3 Result
       tbody
@@ -21,7 +21,10 @@ block content
           tr
             tr(href="/web/game/#{game._id}", style="cursor: pointer;")
               td #{game.blackPlayerName} vs #{game.whitePlayerName}
-              td #{game.size} vs #{game.size}
+              td
+                | #{game.size}x#{game.size}
+                if game.handicap
+                  | &nbsp;H#{game.handicap}
               td #{game.name}
               td #{game.resultExpanded}
 

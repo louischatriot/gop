@@ -49,6 +49,7 @@ function Goban (_opts) {
   this.listeners = {};
 
   this.drawBoard();
+  this.placeStones();
 }
 
 Goban.prototype.on = function(evt, listener) {
@@ -67,6 +68,9 @@ Goban.dots = { '9': [{ x: 2, y: 2 }, { x: 2, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 
              , '19': [{ x: 3, y: 3 }, { x: 3, y: 9 }, { x: 3, y: 15 }, { x: 9, y: 3 }, { x: 9, y: 9 }, { x: 9, y: 15 }, { x: 15, y: 3 }, { x: 15, y: 9 }, { x: 15, y: 15 }]
              };
 
+/**
+ * Draw the empty board (lines and dots)
+ */
 Goban.prototype.drawBoard = function () {
   var $line
     , self = this
@@ -94,6 +98,20 @@ Goban.prototype.drawBoard = function () {
       $dot.css('height', dotSize + '%');
       self.$container.append($dot);
     });
+  }
+};
+
+
+/**
+ * Place stones in gameEngine.board on the goban
+ */
+Goban.prototype.placeStones = function () {
+  for (var i = 0; i < this.gameEngine.size; i += 1) {
+    for (var j = 0; j < this.gameEngine.size; j += 1) {
+      if (this.gameEngine.board[i][j] !== GameEngine.players.EMPTY) {
+        this.drawStone(this.gameEngine.board[i][j], i, j);
+      }
+    }
   }
 };
 
