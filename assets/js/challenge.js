@@ -43,6 +43,7 @@ function notifyServer (evt) {
 
   if (isCreator() || isCurrentChallenger()) {
     data.handicap = parseInt($(evt.currentTarget).parent().find('#handicap').val(), 10);
+    data.creatorColor = $(evt.currentTarget).parent().find('#black').val() === challenge.creatorId ? 'black' : 'white';
   }
 
   $.ajax({ type: 'PUT', url: '/api/challenge/' + challenge._id
@@ -68,7 +69,7 @@ function updateScreen () {
   template = template.replace(/-->/g, '');
 
   data.iAmCreator = isCreator();
-  data.canModifyHandicap = isCreator() || isCurrentChallenger();
+  data.canNegotiate = isCreator() || isCurrentChallenger();
   data.waitingForOpponent = (isCreator() && challenge.creatorOK && !challenge.currentChallengerOK) ||
                             (isCurrentChallenger() && !challenge.creatorOK && challenge.currentChallengerOK);
   data.waitingForMe = (isCurrentChallenger() && challenge.creatorOK && !challenge.currentChallengerOK) ||
@@ -79,10 +80,14 @@ function updateScreen () {
   if (data.waitingForMe) { data.buttonMessage = "Opponent accepted terms, agree?"; }
   if (data.bothOk) { data.buttonMessage = "Both OK, launching game"; }
 
+  data.players = [{ _id: challenge.creatorId, name: challenge.creatorName, selected: challenge.creatorColor !== 'white' }];
+
+  // Set selected challenger and black player
   if (challenge && challenge.challengers && challenge.currentChallengerId) {
     data.challenge.challengers.forEach(function (d) {
       if (d._id === challenge.currentChallengerId) {
         d.selected = true;
+        data.players.push({ _id: d._id, name: d.name, selected: challenge.creatorColor === 'white' });
       }
     });
   }
