@@ -38,7 +38,7 @@ block content
             {{/players}}
           </select>
       div.control-group
-        label.control-label(for="handicap") Handicap (not working yet)
+        label.control-label(for="handicap") Handicap
         div.controls
           | <select id="handicap" class="input-small" {{^canNegotiate}}disabled{{/canNegotiate}}>
           each val in [0, 2, 3, 4, 5, 6, 7, 8, 9]
