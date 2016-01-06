@@ -250,18 +250,34 @@ function GameEngine (_opts) {
 
   // Options
   this.size = opts.size || 19;
+  this.handicap = opts.handicap || 0;
 
   this.listeners = {};
   this.initialize(true);
 }
 
 GameEngine.players = { WHITE: 'white', BLACK: 'black', EMPTY: 'empty', MARK: 'mark' };   // MARK is a special player used in the group detection algorithms
-
+GameEngine.handicapLines = { '9': [ 2, 4, 6 ]
+                           , '13': [ 3, 6, 9 ]
+                           , '19': [ 3, 9, 15 ]
+                           };
+GameEngine.handicaps = { '0': []
+                       , '2': [{ x: 0, y: 0 }, { x: 2, y: 2 }]
+                       , '3': [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 2 }]
+                       , '4': [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 }, { x: 2, y: 2 }]
+                       , '5': [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 1, y: 1 }]
+                       , '6': [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 1 }, { x: 2, y: 1 }]
+                       , '7': [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 1 }]
+                       , '8': [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 2 }]
+                       , '9': [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 2 }, { x: 1, y: 1 }]
+                       };
 
 /*
  * Hard initialization will also forget all played moves while soft reinitializes only the state
  */
 GameEngine.prototype.initialize = function (hard) {
+  var self = this;
+
   this.board = [];
   for (var i = 0; i < this.size; i += 1) {
     this.board[i] = [];
@@ -271,7 +287,13 @@ GameEngine.prototype.initialize = function (hard) {
   }
 
   this.currentPlayer = GameEngine.players.BLACK;
-  // TODO: handle handicap here
+  var hl = GameEngine.handicapLines[this.size];
+  GameEngine.handicaps[this.handicap || 0].forEach(function (p) {
+    console.log('---- ' + hl[p.x] + ' - ' + hl[p.y]);
+    self.board[hl[p.x]][hl[p.y]] = GameEngine.players.BLACK;
+  });
+
+  console.log(this.board);
 
   this.captured = {};
   this.captured[GameEngine.players.BLACK] = 0;

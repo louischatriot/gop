@@ -9,7 +9,7 @@ var size = parseInt($('#size').html(), 10);
 var reviewMode = $('#review-mode').html() === 'true';
 var gameStatus = $('#game-status').html();
 var canPlayColor = $('#can-play').html();   // In game mode, tells which color you can play. In review mode, either 'both' (you are the reviewer) or 'none'
-var gameEngine = new GameEngine({ size: size });
+var gameEngine = new GameEngine({ size: size, handicap: 2 });
 var serverMoveTree, playApiUrl, resyncApiUrl, focusApiUrl, stateChangedEvent;
 var updateDisplay = true;
 var countingPointsMode = false, markedAsDead = $('#marked-dead').html(), shiftDown = false, blackScore, whiteScore;
