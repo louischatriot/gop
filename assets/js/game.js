@@ -51,8 +51,8 @@ gameEngine.on('board.cleared', function () { goban.clearBoard(); });
 gameEngine.on('initialization.done', function () { goban.clearBoard(); goban.placeStones(); });
 gameEngine.on('captured.change', function (m) { $hudContainer.find('.captured-' + m.player).html(m.captured); });
 gameEngine.on('ko.new', function (m) { goban.drawStone('square', m.x, m.y); });
-gameEngine.on('intersection.point', function (m) { goban.drawPoint(m.owner, m.x, m.y); });
 $hudContainer.find('#pass').on('click', function () { gameEngine.pass(); });
+gameEngine.on('intersection.point', function (m) { goban.drawPoint(m.owner, m.x, m.y); });
 $hudContainer.find('#resign').on('click', function () { gameEngine.resign(); });
 
 gameEngine.on('movePlayed', function (m) {
@@ -353,47 +353,87 @@ function redrawGameTree() {
     maxYPos = Math.max(maxYPos, move.yPos);
   });
 
-  // "Horizontalize" graph - step 1
-  depths = [];
-  tree.traverse(function (move) {
-    if (!depths[move.depth]) { depths[move.depth] = []; }
-    depths[move.depth].push(move);
-  });
-  tree.postOrderTraverse(function (move) {
-    if (!move.children) { return; }
+  // CHU TEST FOR HORIZONTALIZATION
+  function ConvexHull () {
+    this.yPoses = [];
+  }
 
-    var delta = move.children[0].yPos - move.yPos;
-    if (delta > 0) {
-      var begun = false;
-      depths[move.depth].forEach(function (m) {
-        if (m === move) { begun = true; }
-        if (begun) {
-          m.yPos += delta;
-        }
-      });
+  ConvexHull.prototype.update = function (yPos, depth) {
+    this.yPoses[depth] = yPos;
+  };
+
+  ConvexHull.prototype.getNextAvailableYPosAt = function (depth) {
+    if (this.yPoses[depth]) {
+      return this.yPoses[depth] + 1;
+    } else {
+      return 0;
     }
-  });
+  };
+
+  function acl (move, ch) {
+    var minYPos = 0;
+
+    if (move.children) {
+      for (var i = 0; i < move.children.length; i += 1) {
+        var candidateMinYPos = acl(move.children[i], ch);
+        if (i === 0) { minYPos = candidateMinYPos; }
+      }
+    }
+
+    move.yPos = Math.max(minYPos, ch.getNextAvailableYPosAt(move.depth));
+    ch.update(move.yPos, move.depth);
+
+    return move.yPos;
+  }
+
+  var ch = new ConvexHull();
+
+  acl(tree, ch);
+
+  console.log('-------------------------');
+  console.log(ch);
+
+  // "Horizontalize" graph - step 1
+  //depths = [];
+  //tree.traverse(function (move) {
+    //if (!depths[move.depth]) { depths[move.depth] = []; }
+    //depths[move.depth].push(move);
+  //});
+  //tree.postOrderTraverse(function (move) {
+    //if (!move.children) { return; }
+
+    //var delta = move.children[0].yPos - move.yPos;
+    //if (delta > 0) {
+      //var begun = false;
+      //depths[move.depth].forEach(function (m) {
+        //if (m === move) { begun = true; }
+        //if (begun) {
+          //m.yPos += delta;
+        //}
+      //});
+    //}
+  //});
 
   // "Horizontalize" graph - step 2
-  var depths = [];
-  tree.traverse(function (move) {
-    if (!depths[move.depth]) { depths[move.depth] = []; }
-    depths[move.depth].push(move);
-  });
-  tree.traverse(function (move) {
-    if (!move.parent) { return; }
+  //var depths = [];
+  //tree.traverse(function (move) {
+    //if (!depths[move.depth]) { depths[move.depth] = []; }
+    //depths[move.depth].push(move);
+  //});
+  //tree.traverse(function (move) {
+    //if (!move.parent) { return; }
 
-    var delta = move.parent.yPos - move.yPos;
-    if (delta > 0) {
-      var begun = false;
-      depths[move.depth].forEach(function (m) {
-        if (m === move) { begun = true; }
-        if (begun) {
-          m.yPos += delta;
-        }
-      });
-    }
-  });
+    //var delta = move.parent.yPos - move.yPos;
+    //if (delta > 0) {
+      //var begun = false;
+      //depths[move.depth].forEach(function (m) {
+        //if (m === move) { begun = true; }
+        //if (begun) {
+          //m.yPos += delta;
+        //}
+      //});
+    //}
+  //});
 
   // Display stones and lines
   tree.traverse(function (move) {
@@ -410,6 +450,10 @@ function redrawGameTree() {
         dotLabel = move.depth;
         break;
     }
+
+    // DEV
+    dotLabel = move.n;
+
     var $dot = $('<div data-n="' + move.n + '" class="hud-stone-' + move.player + '"><div style="display: table-cell; vertical-align: middle;">' + dotLabel + '</div></div>');
     $dot.width(dotSize);
     $dot.height(dotSize);
