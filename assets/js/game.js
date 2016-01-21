@@ -356,14 +356,26 @@ function redrawGameTree() {
   // CHU TEST FOR HORIZONTALIZATION
   function ConvexHull () {
     this.yPoses = [];
+    this.maxDepth = 0;
   }
 
   ConvexHull.prototype.update = function (yPos, depth) {
+    var i, maxYPos = yPos;
+
     this.yPoses[depth] = yPos;
+    this.maxDepth = Math.max(this.maxDepth, depth);
+
+    // "Convexize"
+    for (i = depth; i <= this.maxDepth; i += 1) {
+      if (this.yPoses[i] !== undefined && this.yPoses[i] > maxYPos) { maxYPos = this.yPoses[i]; }
+    }
+    for (i = depth; i <= this.maxDepth; i += 1) {
+      this.yPoses[i] = maxYPos;
+    }
   };
 
   ConvexHull.prototype.getNextAvailableYPosAt = function (depth) {
-    if (this.yPoses[depth]) {
+    if (this.yPoses[depth] !== undefined) {
       return this.yPoses[depth] + 1;
     } else {
       return 0;
@@ -387,11 +399,8 @@ function redrawGameTree() {
   }
 
   var ch = new ConvexHull();
-
   acl(tree, ch);
 
-  console.log('-------------------------');
-  console.log(ch);
 
   // "Horizontalize" graph - step 1
   //depths = [];
