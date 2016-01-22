@@ -354,33 +354,60 @@ function redrawGameTree() {
   });
 
   // CHU TEST FOR HORIZONTALIZATION
+  //function ConvexHull () {
+    //this.yPoses = [];
+    //this.maxDepth = 0;
+  //}
+
+  //ConvexHull.prototype.update = function (yPos, depth) {
+    //var i, maxYPos = yPos;
+
+    //this.yPoses[depth] = yPos;
+    //this.maxDepth = Math.max(this.maxDepth, depth);
+
+    //// "Convexize"
+    //for (i = depth; i <= this.maxDepth; i += 1) {
+      //if (this.yPoses[i] !== undefined && this.yPoses[i] > maxYPos) { maxYPos = this.yPoses[i]; }
+    //}
+    //for (i = depth; i <= this.maxDepth; i += 1) {
+      //this.yPoses[i] = maxYPos;
+    //}
+  //};
+
+  //ConvexHull.prototype.getNextAvailableYPosAt = function (depth) {
+    //if (this.yPoses[depth] !== undefined) {
+      //return this.yPoses[depth] + 1;
+    //} else {
+      //for (var i = depth; i >= 0; i -= 1) {
+        //if (this.yPoses[i] !== undefined) {
+          //return this.yPoses[i] + 1;
+        //}
+      //}
+      //return 0;
+    //}
+  //};
+
   function ConvexHull () {
-    this.yPoses = [];
-    this.maxDepth = 0;
+    this.maxDepths = [];
   }
 
-  ConvexHull.prototype.update = function (yPos, depth) {
-    var i, maxYPos = yPos;
-
-    this.yPoses[depth] = yPos;
-    this.maxDepth = Math.max(this.maxDepth, depth);
-
-    // "Convexize"
-    for (i = depth; i <= this.maxDepth; i += 1) {
-      if (this.yPoses[i] !== undefined && this.yPoses[i] > maxYPos) { maxYPos = this.yPoses[i]; }
-    }
-    for (i = depth; i <= this.maxDepth; i += 1) {
-      this.yPoses[i] = maxYPos;
-    }
-  };
-
   ConvexHull.prototype.getNextAvailableYPosAt = function (depth) {
-    if (this.yPoses[depth] !== undefined) {
-      return this.yPoses[depth] + 1;
-    } else {
-      return 0;
+    for (var i = 0; i < this.maxDepths.length; ++i) {
+      if (depth < this.maxDepths[i]) return i;
+    }
+    return this.maxDepths.length;
+  };
+
+  ConvexHull.prototype.update = function (yPos, depth) {
+    for (var i = 0; i <= yPos; ++i) { // Note that this list is of size “maxLevel”+1
+      if (i < this.maxDepths.length) { // Exist = defined.
+        this.maxDepths[i] = Math.min(this.maxDepths[i], depth);
+      } else {
+        this.maxDepths.push(depth);
+      }
     }
   };
+
 
   function acl (move, ch) {
     var minYPos = 0;
